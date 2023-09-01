@@ -14,9 +14,8 @@ connection();
 
 const corsOptions = {
     credentials: true,
-    origin: 'http://localhost:5173', // Cambia esto con la URL de tu cliente de React
+    origin: process.env.FRONTEND_ORIGIN
 };
-
 
 // Middleware
 app.use(express.json());
