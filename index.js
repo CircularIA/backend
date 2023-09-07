@@ -2,11 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
 const connection = require('./db');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
-const verifyRoutes = require('./routes/verify');
 const mailRoutes = require('./routes/mail');
 
 // Connect to database
@@ -20,12 +18,10 @@ const corsOptions = {
 // Middleware
 app.use(express.json());
 app.use(cors(corsOptions));
-app.use(cookieParser());
 
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/verify', verifyRoutes)
 app.use('/api/mail', mailRoutes);
 
 const PORT = process.env.PORT || 5000;
