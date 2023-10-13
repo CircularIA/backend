@@ -4,6 +4,7 @@ const Joi = require('joi');
 const passwordComplexity = require('joi-password-complexity');
 
 const userSchema = new moongose.Schema({
+    _id: moongose.Schema.Types.ObjectId,
     fullName:{
         type: String,
         required: true,
@@ -11,14 +12,27 @@ const userSchema = new moongose.Schema({
     email:{
         type: String,
         required: true,
+        unique: true,
     },
     password:{
         type: String,
         required: true,
     },
-    companyName:{
-        type: String,
-        required: true,
+    //Company information
+    company: {
+        type: moongose.Schema.Types.ObjectId,
+        ref: 'Company',
+    },
+    //Type of user
+    //0: Admin
+    //1: Owner of company
+    //2: Regular user
+    type: {type: Number, default: 0},
+    flag: {type: Boolean, default: false}, 
+    //Departament of the user, just for regular users
+    departament: {
+        type: moongose.Schema.Types.ObjectId,
+        ref: 'Departament',
     },
 });
 
@@ -34,7 +48,7 @@ const validate = (data) => {
         fullName: Joi.string().required().label('Full Name'),
         email: Joi.string().required().email().label('Email'),
         password: passwordComplexity().required().label('Password'),
-        companyName: Joi.string().required().label('Company Name'),
+        type: Joi.boolean().label('Type'),
     });
     return Schema.validate(data);
 }

@@ -5,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const connection = require('./db');
 const userRoutes = require('./routes/users');
+const companyRoutes = require('./routes/company');
 const authRoutes = require('./routes/auth');
 const verifyRoutes = require('./routes/verify');
 const mailRoutes = require('./routes/mail');
@@ -27,7 +28,6 @@ app.use(cookieParser());
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/verify', verifyRoutes)
-app.use('/api/mail', mailRoutes);
-
+app.use('/api/company', companyRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
