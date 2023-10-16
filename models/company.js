@@ -9,8 +9,7 @@ const companySchema = new mongoose.Schema({
     image: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte
-    //industrial y manufactura, valorizacion de residuos
-    typeIndustry: {type: String, required: true},
+    
     address: {type: String, required: true},
     location: {
         type:{
@@ -38,8 +37,9 @@ const companySchema = new mongoose.Schema({
     //Description of the company
     description: {type: String},
     //Information that obtain of the company of the survey
-    
-    //Contact information
+    //industrial y manufactura, valorizacion de residuos
+    typeIndustry: {type: String, required: true},
+    //Contact information   
     contact: {type: String, required: false},
     //Projects of the company in the ECI
     proyectosECI: {type: Array},

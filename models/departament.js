@@ -20,3 +20,7 @@ const departamentSchema = new mongoose.Schema({
         }
     ]
 })
+
+const Departament = mongoose.model('Departament', departamentSchema);
+
+module.exports = { Departament };

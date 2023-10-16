@@ -38,7 +38,7 @@ const userSchema = new moongose.Schema({
 
 userSchema.methods.generateAuthToken = function(){
     const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: '2h'});
-    return { token, userId: this._id };
+    return { token, userId: this._id, userFlag: this.flag};
 }
 
 const User = moongose.model('User', userSchema);
