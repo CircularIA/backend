@@ -21,28 +21,50 @@ const companySchema = new mongoose.Schema({
             index: '2dsphere',
         }
     },
-    //Quantity of employees
-    employees: {type: Number, required: true},
     //Size of the company
     size: {type: String},
-    //Type of machinery
-    machinerys: [
-        {
-            machinery: {type: String},
-            type: {type: String},
-            quantity: {type: Number}
-        }
-    ],
-    prioritys: {type: Array},
     //Description of the company
     description: {type: String},
-    //Information that obtain of the company of the survey
-    //industrial y manufactura, valorizacion de residuos
+    //Entrevista
+    //gestion de residuos, bienes de consumo, retail, centro de distribuicion, industrial manufactura, valorizacion de residuos
     typeIndustry: {type: String, required: true},
-    //Contact information   
-    contact: {type: String, required: false},
-    //Projects of the company in the ECI
-    proyectosECI: {type: Array},
+    //Quantity of employees
+    employees: {type: Number, required: true},
+    //Prioridades ambientales
+    environmentalPrioritys: [{
+        priority: {type: String},
+    }],
+    //Reducir consumo del agua
+    //Alcanzar y mantener estado de zero waste
+    //Reducir huella de carbono 1er alcance
+    //Reducir huella de carbono 2do alcance
+    //Reducir huella de carbono 3er alcance
+    //Ser reconocido como una empresa comprometida con la sostenibilidad
+    // *Tipo de maquinaria que posee la empresa
+    typeMachinerys: [{
+        machinery: {type: String},
+    }],
+    //Camiones de transporte
+    //Maquinaria que procesa residuos
+    //Maquinaria con uso de gas 
+    //Maquinarias refrigerantes
+    //Vehiculos para uso de colaboradores
+    //Gruas
+    //Maquinaria de construccion
+    //*Proyectos de la compañia asociados a la economia circular
+    proyectosECI: [{
+        proyecto: {type: String},
+    }],
+    //Culturizacion de empleados en aspectos de sostenibilidad 
+    //Optimizacion de transporte
+    //Reduccion de agua
+    //Indicadores que calcula la empresa
+    // ! ojo con esta definicion, aun falta definir la conexion con los indicadores
+    indicators: [{
+        indicator: {type: String},
+    }],
+    //*Atributo que indique si la empresa tiene un departamento de innovacion y/o desarrollo
+    innovationDepartament: {type: Boolean},
     //Owner user
     ownerUser: {
         //Just need the email and name, no validate or passwords
@@ -66,7 +88,6 @@ const companySchema = new mongoose.Schema({
 })
 
 // Have to definy methods for specific functions
-
 const Company = mongoose.model('Company', companySchema);
 
 module.exports = {Company};
