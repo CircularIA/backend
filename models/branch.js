@@ -24,8 +24,8 @@ const branchSchema = new mongoose.Schema({
     ],
     //Departament of the branch
     departament: {
-        code: { type: String },
-        name: { type: String },
+        type: Schema.Types.ObjectId,
+        ref: 'Departament',
     },
 })
 

@@ -2,6 +2,7 @@ const { User, validate } = require('../models/user');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const { Company } = require('../models/company');
+const jwt = require('jsonwebtoken');
 
 //This is to create a user in the database with form register
 const createUser = async (req, res) => {
@@ -42,6 +43,7 @@ const createOwnerUser = async (req, res) => {
         const companyDats = await Company.findOne({ rut: company });
         //Have to verify if the company exist
         if (!companyDats) return res.status(400).send({ message: 'Company not found' });
+        //Owner user can access to whole departaments and branches of the company
         const newUser = new User({
             _id: new mongoose.Types.ObjectId(),
             fullName,
@@ -57,4 +59,16 @@ const createOwnerUser = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-module.exports = { createUser, createOwnerUser };
+//Have to protected this route
+
+const getUser = async (req, res) => {
+    try {
+        console.log("req",req.user)
+        const user = await User.findById(req.user._id).populate('company');
+        if (!user) return res.status(400).send({ message: 'User not found' });
+        return res.status(200).send({ user });
+    } catch (error) {
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+module.exports = {getUser, createUser, createOwnerUser };

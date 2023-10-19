@@ -41,6 +41,7 @@ userSchema.methods.generateAuthToken = function(){
     return { token, userId: this._id, userFlag: this.flag};
 }
 
+
 const User = moongose.model('User', userSchema);
 
 const validate = (data) => {
