@@ -68,6 +68,7 @@ const registerCompany = async (req, res) => {
 
 const getCompany = async (req, res) => {
     try {
+        console.log("get company")
         const {user} = req;
         const findUser = await User.findById(user._id).populate('company');
         if (!findUser) return res.status(400).send({ message: 'User not found' });
@@ -94,4 +95,43 @@ const getCompany = async (req, res) => {
         return res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-module.exports = { getCompany, registerCompany };
+
+const updatecompany = async (req,res) => {
+    try {
+        const {
+            rut,
+            image,
+            size,
+            description,
+            employees,
+            environmentalPrioritys,
+            typeMachinerys,
+            proyectosECI,
+            innovationDepartament,
+            branches,
+            departaments
+        } = req.body;
+        //Have to update the value of the company
+        //Using the rut
+        // the goals is updated the values that are not null
+        const company = await Company.findOneAndUpdate({rut}, {
+            image,
+            size,
+            description,
+            employees,
+            environmentalPrioritys,
+            typeMachinerys,
+            proyectosECI,
+            innovationDepartament,
+            branches,
+            departaments
+        });
+        if (!company) return res.status(400).send({ message: 'Company not found' });
+        return res.status(200).send({ message: 'Company updated' });
+    } catch (error) {
+        console.log("error", error)
+        return res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+module.exports = { getCompany, registerCompany, updatecompany};

@@ -1,6 +1,9 @@
 const {Branch} = require('../models/branch');
 const { User} = require('../models/user');
 const {Company} = require('../models/company');
+const {Departament} = require('../models/departament');
+
+const mongoose = require('mongoose');
 const getBranch = async (req, res) => {
     try {
         //Depending of the user type and the user id, we have to return the branches
@@ -34,4 +37,63 @@ const getBranch = async (req, res) => {
     }
 }
 
-module.exports = { getBranch };
+const registerBranch = async (req, res) => {
+    try {
+        const {name, description, address, email, manager, process, departament } = req.body;
+        //We need to check if the departament exist
+        const findDepartament = await Departament.findById(departament);
+        if (!findDepartament) return res.status(400).send({ message: 'Departament not found ' });
+
+        const branch = new Branch({
+            _id: new mongoose.Types.ObjectId(),
+            name,
+            description,
+            address,
+            email,
+            manager,
+            process,
+            departament,
+        });
+        const savedBranch = await branch.save();
+        if (!savedBranch) return res.status(400).send({ message: 'Branch not saved' });
+        //Have to add the new branch to the departament
+        findDepartament.assignedBranches.push(savedBranch._id);
+        await findDepartament.save();
+        //Have to add the new branch to the company
+        const findCompany = await Company.findById(findDepartament.company);
+        if (!findCompany) return res.status(400).send({ message: 'Company not found' });
+        findCompany.branches.push(savedBranch._id);
+        await findCompany.save();
+        return res.status(200).send({ branch: savedBranch });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+const updateBranch = async (req, res) => {
+    try {
+        const {name, description, address, email, manager, process, departament } = req.body;
+        const {id} = req.params;
+        //We need to check if the departament exist
+        const findDepartament = await Departament.findById({code:departament});
+        if (!findDepartament) return res.status(400).send({ message: 'Departament not found' });
+
+        const branch = await Branch.findByIdAndUpdate(id, {
+            name,
+            description,
+            address,
+            email,
+            manager,
+            process,
+            departament,
+        });
+        if (!branch) return res.status(400).send({ message: 'Branch not found' });
+        return res.status(200).send({ branch });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+module.exports = { getBranch, registerBranch, updateBranch };

@@ -18,7 +18,11 @@ const departamentSchema = new mongoose.Schema({
             type: Schema.Types.ObjectId,
             ref: 'Branch',
         }
-    ]
+    ],
+    company: {
+        type: Schema.Types.ObjectId,
+        ref: 'Company',
+    },
 })
 
 const Departament = mongoose.model('Departament', departamentSchema);

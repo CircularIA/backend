@@ -9,7 +9,6 @@ const companySchema = new mongoose.Schema({
     image: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte
-    
     address: {type: String, required: true},
     location: {
         type:{
@@ -61,7 +60,13 @@ const companySchema = new mongoose.Schema({
     //Indicadores que calcula la empresa
     // ! ojo con esta definicion, aun falta definir la conexion con los indicadores
     indicators: [{
-        indicator: {type: String},
+        name: {type: String},
+        formula: {type: String},
+        source: {type: String}, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
+        categorie: {type: String}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+        sourceType: {type: String}, //Tipo de fuente (Flujos, Agua, Emisiones)
+        description: {type: String}, //Descripcion del indicador
+        measurement: {type: String}, //Unidad de medida del indicador
     }],
     //*Atributo que indique si la empresa tiene un departamento de innovacion y/o desarrollo
     innovationDepartament: {type: Boolean},

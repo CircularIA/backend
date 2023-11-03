@@ -33,7 +33,7 @@ const createOwnerUser = async (req, res) => {
         } = req.body;
         if (!fullName || !email || !password || !company) return res.status(400).send({ message: 'Incomplete data' });
         //Have to verify if the user already exist
-        const user = await User.findOne({ email: req.body.email });
+        const user = await User.findOne({ email: 'req.body.email' });
         if (user)
             return res.status(409).send('User already registered.');
         //Have to create a new user
