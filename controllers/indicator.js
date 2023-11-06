@@ -1,4 +1,5 @@
 const { Indicator } = require('../models/indicator');
+const {Branch} = require('../models/branch');
 const { InputDat } = require('../models/inputDat');
 const mongoose = require('mongoose');
 
@@ -20,45 +21,47 @@ const getIndicatorValue = async (req, res) => {
         //Se obtendra todos los indicadores
         console.log("inputData modelo", InputDat)
         const {
+            year,
             month,
             name,
+            branch, //Object id de la sucursal
         } = req.body;
         //Obtener los datos de entrada asociados al indicador
         const currentIndicator = await Indicator.find({name});
         if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
+        const branchExist = await Branch.findById(branch);
         console.log("currentIndicator", currentIndicator)
         //Definir rango de fechas
-        const startDate = new Date(2021, month - 1, 1, 0, 0, 0, 0);
-        const endDate = new Date(2021, month, 0, 23, 59, 59, 999);
-
-        const pipeline = [
-            {
-                $match: {
-                    date: {
-                        $gte: startDate,
-                        $lte: endDate,
-                    }
-                }
-            }
-        ];
+        const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
         //Obtener los valores de los input dats
         const inputDats = currentIndicator[0].inputDats;
         const inputDatsValues = [];
-        console.log("inputdats", currentIndicator[0].inputDats)
-        console.log("factors", currentIndicator[0].factors)
         for (const input of inputDats){
             const {code} = input;
             //Buscar solamente los datos de entrada de un mes especifico
             //Es decir, ocupando un rango de fechas
-            console.log(await InputDat.find({code}))
-            const inputDatValues = await InputDat.find({code}).aggregate(pipeline);
+            const inputDatValues = await InputDat.aggregate([
+                {
+                    $match:{
+                        date:{
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        code: code,
+                    }
+                }
+            ])
+            console.log("input Dats Value", inputDatValues)
             inputDatsValues.push(inputDatValues);
         }
         //Obtener los valores de los factores
         const factorValue = currentIndicator[0].factors[0].value;
         //Calcular el valor del indicador
-        if (currentIndicator.name === 'porcentaje de valorizacion ciclo biologico'){
+        
+        if (currentIndicator[0].name === 'porcentaje de valorizacion ciclo biologico'){
+            
             //Se debe obtener el valor del dato de entrada de
             //Entrada de residuos totales
             //Buscar en la variable inputDatsValues el valor del dato de entrada
@@ -70,20 +73,24 @@ const getIndicatorValue = async (req, res) => {
                 valTratamientoRiles: 0,
             }
             inputDatsValues.forEach((inputDat) => {
-                if (inputDat.name === 'entrada residuos totales'){
-                    valores['entradaResiduosTotales'] = inputDat.value
-                } else if (inputDat.name === 'generacion lodos'){
-                    valores['generacionLodos'] = inputDat.value;
-                } else if (inputDat.name === 'val compostaje'){
-                    valores['valCompostaje'] = inputDat.value;
-                } else if (inputDat.name === 'val biodigestion'){
-                    valores['valBiodigestion'] = inputDat.value;
-                } else if (inputDat.name === 'val tratamiento riles'){
-                    valores['valTratamientoRiles'] = inputDat.value;
+                console.log("inputDat", inputDat)
+                if (inputDat[0].name === 'entrada residuos totales'){
+                    valores['entradaResiduosTotales'] = inputDat[0].value
+                } else if (inputDat[0].name === 'generacion lodos'){
+                    valores['generacionLodos'] = inputDat[0].value;
+                } else if (inputDat[0].name === 'val compostaje'){
+                    valores['valCompostaje'] = inputDat[0].value;
+                } else if (inputDat[0].name === 'val biodigestion'){
+                    valores['valBiodigestion'] = inputDat[0].value;
+                } else if (inputDat[0].name === 'val tratamiento riles'){
+                    valores['valTratamientoRiles'] = inputDat[0].value;
                 }
             })
+            console.log("valores", valores)
             const valorizacionCicloBiologico = ((valores['valCompostaje'] + valores['valBiodigestion'] + valores['valTratamientoRiles']) * 100 ) / ((valores['entradaResiduosTotales'] * factorValue) / 100 );
             return res.status(200).send({valorizacionCicloBiologico});
+        } else{
+            res.status(400).send({ message: 'Indicator not found' });
         }
 
     } catch (error) {

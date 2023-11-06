@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const getInputDats = async (req, res) => {
     try {
         const {branch} = req.params;
-        const inputDats = await InputDat.find();
+        const inputDats = await InputDat.find({branch});
         if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
         return res.status(200).send({ inputDats });
     } catch (error) {
