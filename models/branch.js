@@ -14,8 +14,11 @@ const branchSchema = new mongoose.Schema({
         name: { type: String },
         email: { type: String },
     },
-    
-    //!Agregar metas de la sucursal
+    //Indicadores de la sucursal
+    indicators: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Indicator',
+    }],
     //Departament of the branch
     departament: {
         type: Schema.Types.ObjectId,

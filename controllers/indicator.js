@@ -50,6 +50,7 @@ const getIndicatorValue = async (req, res) => {
                             $lte: endDate,
                         },
                         code: code,
+                        branch: branch,
                     }
                 }
             ])
@@ -57,10 +58,10 @@ const getIndicatorValue = async (req, res) => {
             inputDatsValues.push(inputDatValues);
         }
         //Obtener los valores de los factores
-        const factorValue = currentIndicator[0].factors[0].value;
         //Calcular el valor del indicador
         
         if (currentIndicator[0].name === 'porcentaje de valorizacion ciclo biologico'){
+            const factorValue = currentIndicator[0].factors[0].value;
             
             //Se debe obtener el valor del dato de entrada de
             //Entrada de residuos totales
@@ -89,6 +90,20 @@ const getIndicatorValue = async (req, res) => {
             console.log("valores", valores)
             const valorizacionCicloBiologico = ((valores['valCompostaje'] + valores['valBiodigestion'] + valores['valTratamientoRiles']) * 100 ) / ((valores['entradaResiduosTotales'] * factorValue) / 100 );
             return res.status(200).send({valorizacionCicloBiologico});
+        } else if (currentIndicator[0].name === 'porcentaje de valorizacion ciclo tecnico'){
+            const factorValue = currentIndicator[0].factors[0].value;
+            const valores = {
+                entradaResiduos: 0,
+                valPec: 0,
+            }
+            inputDatsValues.forEach((inputDat) => {
+                if (inputDat[0].name === 'entrada residuos'){
+                    valores['entradaResiduos'] = inputDat[0].value
+                } else if (inputDat[0].name === 'val pec'){
+                    valores['valPec'] = inputDat[0].value;
+                }
+            })
+            //Retornar el valor junto con el factor
         } else{
             res.status(400).send({ message: 'Indicator not found' });
         }

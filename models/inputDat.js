@@ -9,6 +9,10 @@ const InputdatSchema = new mongoose.Schema({
     value: {type: Number},
     date: {type: Date},
     measurement: {type: String},
+    indicator: {
+        type: Schema.Types.ObjectId,
+        ref: 'Indicator',
+    },
     company: {
         type: Schema.Types.ObjectId,
         ref: 'Company',
