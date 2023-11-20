@@ -17,7 +17,7 @@ const branchSchema = new mongoose.Schema({
     //Indicadores de la sucursal
     indicators: [{
         type: Schema.Types.ObjectId,
-        ref: 'Indicator',
+        ref: 'Indicators',
     }],
     //Departament of the branch
     departament: {

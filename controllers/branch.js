@@ -96,4 +96,17 @@ const updateBranch = async (req, res) => {
     }
 }
 
-module.exports = { getBranch, registerBranch, updateBranch };
+const getIndicators = async (req, res) => {
+    try {
+        const {id} = req.params;
+        //We need to check if the branch exist
+        const branch = await Branch.findById(id).populate('indicators');
+        if (!branch) return res.status(400).send({ message: 'Branch not found' });
+        return res.status(200).send({ indicators: branch.indicators });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+module.exports = { getBranch, getIndicators, registerBranch, updateBranch };

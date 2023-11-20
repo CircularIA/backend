@@ -17,9 +17,8 @@ const getIndicators = async (req, res) => {
 
 const getIndicatorValue = async (req, res) => {
     try {
-        console.log(req.body)
+        console.log("entrada", req.body)
         //Se obtendra todos los indicadores
-        console.log("inputData modelo", InputDat)
         const {
             year,
             month,
@@ -27,16 +26,18 @@ const getIndicatorValue = async (req, res) => {
             branch, //Object id de la sucursal
         } = req.body;
         //Obtener los datos de entrada asociados al indicador
-        const currentIndicator = await Indicator.find({name});
+        const currentIndicator = await Indicator.findOne({ name });
         if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
         const branchExist = await Branch.findById(branch);
+        if (!branchExist) return res.status(400).send({ message: 'Branch not found' });
         console.log("currentIndicator", currentIndicator)
         //Definir rango de fechas
         const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
         const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
         //Obtener los valores de los input dats
-        const inputDats = currentIndicator[0].inputDats;
+        const inputDats = currentIndicator.inputDats;
+        console.log("inputDats", inputDats)
         const inputDatsValues = [];
         for (const input of inputDats){
             const {code} = input;
@@ -50,7 +51,7 @@ const getIndicatorValue = async (req, res) => {
                             $lte: endDate,
                         },
                         code: code,
-                        branch: branch,
+                        branch: branchExist._id,
                     }
                 }
             ])
@@ -60,7 +61,7 @@ const getIndicatorValue = async (req, res) => {
         //Obtener los valores de los factores
         //Calcular el valor del indicador
         
-        if (currentIndicator[0].name === 'porcentaje de valorizacion ciclo biologico'){
+        if (currentIndicator.name === 'porcentaje de valorizacion ciclo biologico'){
             const factorValue = currentIndicator[0].factors[0].value;
             
             //Se debe obtener el valor del dato de entrada de
@@ -90,20 +91,26 @@ const getIndicatorValue = async (req, res) => {
             console.log("valores", valores)
             const valorizacionCicloBiologico = ((valores['valCompostaje'] + valores['valBiodigestion'] + valores['valTratamientoRiles']) * 100 ) / ((valores['entradaResiduosTotales'] * factorValue) / 100 );
             return res.status(200).send({valorizacionCicloBiologico});
-        } else if (currentIndicator[0].name === 'porcentaje de valorizacion ciclo tecnico'){
-            const factorValue = currentIndicator[0].factors[0].value;
+        } else if (currentIndicator.name === 'porcentaje de valorizacion ciclo tecnico'){
+            let factorValue = currentIndicator.factors[0].value;
             const valores = {
                 entradaResiduos: 0,
                 valPec: 0,
+                potencialValorizacion: 0
             }
             inputDatsValues.forEach((inputDat) => {
                 if (inputDat[0].name === 'entrada residuos'){
-                    valores['entradaResiduos'] = inputDat[0].value
+                    valores['entradaResiduos'] += inputDat[0].value
                 } else if (inputDat[0].name === 'val pec'){
-                    valores['valPec'] = inputDat[0].value;
+                    valores['valPec'] += inputDat[0].value;
+                } else if (inputDat[0].name === 'potencial valorizacion ciclo tecnico'){
+                    valores['potencialValorizacion'] += inputDat[0].value;
                 }
             })
             //Retornar el valor junto con el factor
+            factorValue = (valores['potencialValorizacion'] * 100) / (valores['entradaResiduos'])
+            const porcentajeTecnico = ((valores['valPec']  * 100 ) / ((valores['entradaResiduos'] * factorValue) / 100 ));
+            return res.status(200).send({porcentajeTecnico});
         } else{
             res.status(400).send({ message: 'Indicator not found' });
         }
@@ -116,7 +123,7 @@ const getIndicatorValue = async (req, res) => {
 
 const registerIndicator = async (req, res) => {
     try {
-        const {name, formula, source, categoria, sourceType, description, measurement, inputDats, factors } = req.body;
+        const {name, formula, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
         //We need to check if the departament exist
         console.log(req.body)
         //Have to check if the indicator exist
@@ -154,7 +161,7 @@ const registerIndicator = async (req, res) => {
             name,
             formula,
             source,
-            categoria,
+            categorie,
             sourceType,
             description,
             measurement,
