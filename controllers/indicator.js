@@ -62,7 +62,7 @@ const getIndicatorValue = async (req, res) => {
         //Calcular el valor del indicador
         
         if (currentIndicator.name === 'porcentaje de valorizacion ciclo biologico'){
-            const factorValue = currentIndicator[0].factors[0].value;
+            let factorValue = 0
             
             //Se debe obtener el valor del dato de entrada de
             //Entrada de residuos totales
@@ -73,6 +73,7 @@ const getIndicatorValue = async (req, res) => {
                 valCompostaje: 0,
                 valBiodigestion: 0,
                 valTratamientoRiles: 0,
+                potencialValorizacion: 0,
             }
             inputDatsValues.forEach((inputDat) => {
                 console.log("inputDat", inputDat)
@@ -86,9 +87,12 @@ const getIndicatorValue = async (req, res) => {
                     valores['valBiodigestion'] = inputDat[0].value;
                 } else if (inputDat[0].name === 'val tratamiento riles'){
                     valores['valTratamientoRiles'] = inputDat[0].value;
+                } else if (inputDat[0].name === 'potencial valorizacion ciclo biologico'){
+                    valores['potencialValorizacion'] = inputDat[0].value;
                 }
             })
             console.log("valores", valores)
+            factorValue = (valores['potencialValorizacion'] / valores['entradaResiduosTotales'])*100;
             const valorizacionCicloBiologico = ((valores['valCompostaje'] + valores['valBiodigestion'] + valores['valTratamientoRiles']) * 100 ) / ((valores['entradaResiduosTotales'] * factorValue) / 100 );
             return res.status(200).send({valorizacionCicloBiologico});
         } else if (currentIndicator.name === 'porcentaje de valorizacion ciclo tecnico'){
