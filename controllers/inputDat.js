@@ -64,4 +64,48 @@ const registerInputDats = async (req, res) => {
     }
 }
 
-module.exports = { getInputDats, registerInputDats };
+const updateInputDat = async (req, res) => {
+    try {
+        //El formato sera un objeto
+        const { id } = req.params;
+        const { name, value, date, measurement } = req.body;
+        const inputDat = await InputDat.findOne({ _id: id });
+        if (!inputDat) return res.status(400).send({ message: 'Input data not found' });
+        inputDat.name = name;
+        inputDat.value = value;
+        inputDat.date = date;
+        inputDat.measurement = measurement;
+        const savedInputDat = await inputDat.save();
+        if (!savedInputDat) return res.status(400).send({ message: 'Input data not saved' });
+        return res.status(200).send({ inputDat: savedInputDat });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+const updateInputDats = async (req, res) => {
+    try {
+        //El formato sera un arreglo de objetos
+        const { inputDats } = req.body;
+        const promises = inputDats.map(async inputDat => {
+            const { id, name, value, date, measurement } = inputDat;
+            const currentInputDat = await InputDat.findOne({ _id: id });
+            if (!currentInputDat) return res.status(400).send({ message: 'Input data not found' });
+            if (currentInputDat.name !== name) return res.status(400).send({ message: 'Input data name can not be changed' });
+            currentInputDat.name = name;
+            currentInputDat.value = value;
+            currentInputDat.date = date;
+            currentInputDat.measurement = measurement;
+            const savedInputDat = await currentInputDat.save();
+            if (!savedInputDat) return res.status(400).send({ message: 'Input data not saved' });
+        });
+        await Promise.all(promises);
+        return res.status(200).send({ message: 'Input data updated' });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+module.exports = { getInputDats, registerInputDats, updateInputDat, updateInputDats };
