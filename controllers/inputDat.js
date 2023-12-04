@@ -15,6 +15,19 @@ const getInputDats = async (req, res) => {
     }
 }
 
+const getInputDatsByIndicator = async (req, res) => {
+    try {
+        const {branch, indicator} = req.params;
+        if (!indicator) return res.status(400).send({ message: 'Indicator is required' });
+        if (!branch) return res.status(400).send({ message: 'Branch is required' });
+        const inputDats = await InputDat.find({indicator, branch});
+        if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
+        return res.status(200).send({ inputDats });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
 const registerInputDats = async (req, res) => {
     try {
         const {name, value, date, measurement, company , branch, indicator  } = req.body;
@@ -108,4 +121,4 @@ const updateInputDats = async (req, res) => {
     }
 }
 
-module.exports = { getInputDats, registerInputDats, updateInputDat, updateInputDats };
+module.exports = { getInputDats, getInputDatsByIndicator, registerInputDats, updateInputDat, updateInputDats };
