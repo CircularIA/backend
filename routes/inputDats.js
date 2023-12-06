@@ -5,7 +5,7 @@ const verifyToken = require('../middlewares/verifyToken.js');
 const { getInputDats, getInputDatsByIndicator, registerInputDats, updateInputDat, updateInputDats } = require('../controllers/inputDat');
 
 router.get('/:branch', getInputDats);
-router.get('/byIndicator/:branch/:indicator', getInputDatsByIndicator);
+router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', getInputDatsByIndicator);
 router.post('/', registerInputDats);
 router.post('/update/:id', updateInputDat);
 router.post('/update', updateInputDats);

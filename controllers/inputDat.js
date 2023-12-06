@@ -1,12 +1,12 @@
-const {InputDat} = require('../models/inputDat');
-const {Branch} = require('../models/branch');
-const {Indicator} = require('../models/indicator');
+const { InputDat } = require('../models/inputDat');
+const { Branch } = require('../models/branch');
+const { Indicator } = require('../models/indicator');
 const mongoose = require('mongoose');
 
 const getInputDats = async (req, res) => {
     try {
-        const {branch} = req.params;
-        const inputDats = await InputDat.find({branch});
+        const { branch } = req.params;
+        const inputDats = await InputDat.find({ branch });
         if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
         return res.status(200).send({ inputDats });
     } catch (error) {
@@ -14,15 +14,97 @@ const getInputDats = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-
+//Hay que definir 4 casos para este endpoint
+//Si no se recibe fecha, obtener todos los datos historicos
+//Si se recibe el año, obtener todos los datos del año
+//Si se recibe el año y el mes, obtener todos los datos del mes
+//Si se recibe el año, el mes y el dia, obtener todos los datos del dia
 const getInputDatsByIndicator = async (req, res) => {
     try {
-        const {branch, indicator} = req.params;
+        //Obtener los input dats de un indicador en una fecha
+        const branch = req.params.branch;
+        const indicator = req.params.indicator;
+        //*El formato es year, month, day
+        let year = req.params.year;
+        let month = req.params.month;
+        let day = req.params.day;
+        //const date = req.params.date || new Date().toISOString().split('T')[0];
         if (!indicator) return res.status(400).send({ message: 'Indicator is required' });
         if (!branch) return res.status(400).send({ message: 'Branch is required' });
-        const inputDats = await InputDat.find({indicator, branch});
-        if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
-        return res.status(200).send({ inputDats });
+        // const dateSplitted = date.split('-');
+        if (!year){
+            //Obtener todos los datos historicos
+            const inputDats = await InputDat.aggregate([
+                {
+                    $match: {
+                        indicator: new mongoose.Types.ObjectId(indicator),
+                        branch: new mongoose.Types.ObjectId(branch),
+                    }
+                }
+            ])    
+            if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
+            return res.status(200).send({ inputDats });
+        } else if (!month){
+            //Obtener todos los datos del año
+            year = parseInt(year);
+            const startDate = new Date(year, 0, 1, 0, 0, 0, 0);
+            const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
+            const inputDats = await InputDat.aggregate([
+                {
+                    $match: {
+                        date: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        indicator: new mongoose.Types.ObjectId(indicator),
+                        branch: new mongoose.Types.ObjectId(branch),
+                    }
+                }
+            ])
+            if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
+            return res.status(200).send({ inputDats });
+        } else if (!day){
+            //Obtener todos los datos de un mes
+            year = parseInt(year);
+            month = parseInt(month);
+            const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
+            const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+            const inputDats = await InputDat.aggregate([
+                {
+                    $match: {
+                        date: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        indicator: new mongoose.Types.ObjectId(indicator),
+                        branch: new mongoose.Types.ObjectId(branch),
+                    }
+                }
+            ])
+            if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
+            return res.status(200).send({ inputDats });
+        } else {
+            //Obtener todos los datos de un dia
+            year = parseInt(year);
+            month = parseInt(month);
+            day = parseInt(day);
+            const startDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+            const endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+            const inputDats = await InputDat.aggregate([
+                {
+                    $match: {
+                        date: {
+                            $gte: startDate,
+                            $lte: endDate,
+                        },
+                        indicator: new mongoose.Types.ObjectId(indicator),
+                        branch: new mongoose.Types.ObjectId(branch),
+                    }
+                }
+            ])
+            if (!inputDats) return res.status(400).send({ message: 'Input data not found' });
+            return res.status(200).send({ inputDats });
+        }
     } catch (error) {
         console.log("error", error)
         res.status(500).send({ message: 'Internal Server Error' });
@@ -30,7 +112,7 @@ const getInputDatsByIndicator = async (req, res) => {
 }
 const registerInputDats = async (req, res) => {
     try {
-        const {name, value, date, measurement, company , branch, indicator  } = req.body;
+        const { name, value, date, measurement, company, branch, indicator } = req.body;
         //We need to check if the departament exist
         if (!company) return res.status(400).send({ message: 'Company is required' });
         if (!branch) return res.status(400).send({ message: 'Branch is required' });
@@ -63,7 +145,7 @@ const registerInputDats = async (req, res) => {
         //Check if the indicator is already in the branch
         const indicatorExist = currentBranch.indicators.find(indicator => indicator.toString() === currentIndicator._id.toString());
         //Add the indicator to the branch
-        if (!indicatorExist){
+        if (!indicatorExist) {
             currentBranch.indicators.push(currentIndicator._id);
             const savedBranch = await currentBranch.save();
             if (!savedBranch) return res.status(400).send({ message: 'Branch not saved' });

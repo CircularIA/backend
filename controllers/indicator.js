@@ -37,7 +37,6 @@ const getIndicatorValue = async (req, res) => {
 
         //Obtener los valores de los input dats
         const inputDats = currentIndicator.inputDats;
-        console.log("inputDats", inputDats)
         const inputDatsValues = [];
         for (const input of inputDats){
             const {code} = input;
