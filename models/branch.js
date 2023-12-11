@@ -5,6 +5,12 @@ const branchSchema = new mongoose.Schema({
     _id: Schema.Types.ObjectId,
     //Codigo de sucursal
     code: { type: String, unique: true },
+    //Company of the branch
+    company: {
+        type: Schema.Types.ObjectId,
+        ref: 'Company',
+        required: true,
+    },
     //Nombre de sucursal
     name: { type: String },
     description: { type: String },

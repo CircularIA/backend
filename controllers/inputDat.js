@@ -159,6 +159,69 @@ const registerInputDats = async (req, res) => {
     }
 }
 
+//Endpoint para registrar varios datos de entrada
+const registerInputDatsMany = async (req, res) => {
+    //const { name, value, date, measurement, company, branch, indicator } = req.body;
+    //Hay valores que son generales, como la compañia, la sucursal y el indicador
+    const {
+        branch,
+        indicator
+    } = req.params;
+    const {
+        inputDats
+    } = req.body;
+    //Verif icar que la compañia, sucursal  y el indicador exista
+    const currentBranch = await Branch.findOne({ _id: branch });
+    if (!currentBranch) return res.status(400).send({ message: 'Branch not found' });
+    //Check if the indicator exist
+    const currentIndicator = await Indicator.findOne({ _id: indicator });
+    if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
+    
+    //Iniciar la transacción de mongo
+    const session = await mongoose.startSession();
+    
+    try {
+        await session.withTransaction(async () => {
+            //Verificar si el indicador ya esta en la sucursal
+            if(!currentBranch.indicators.includes(currentIndicator._id)){
+                currentBranch.indicators.push(currentIndicator._id);
+                await currentBranch.save({session});
+            }
+            //Crear los input dats
+            for (const inputDat of inputDats) {
+                const { name, value, date, measurement } = inputDat;
+
+                const existingInputDats = await InputDat.findOne({ name, branch, indicator }).session(session);
+                //Verificar si la medida es la misma
+                if (existingInputDats && existingInputDats.measurement !== measurement) {
+                    throw new Error('Input data already exist but the measurement is different');
+                }
+
+
+                const newInputDat = new InputDat({
+                    _id: new mongoose.Types.ObjectId(),
+                    name,
+                    code: existingInputDats ? existingInputDats.code : undefined,
+                    value,
+                    date,
+                    measurement,
+                    indicator,
+                    company: currentBranch.company,
+                    branch,
+                })
+                await newInputDat.save({session});
+            }
+        });
+
+        res.status(200).send({message: 'Input data saved'});
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error', error:error.message });
+    } finally {
+        session.endSession();
+    }
+}
+
 const updateInputDat = async (req, res) => {
     try {
         //El formato sera un objeto
@@ -203,4 +266,4 @@ const updateInputDats = async (req, res) => {
     }
 }
 
-module.exports = { getInputDats, getInputDatsByIndicator, registerInputDats, updateInputDat, updateInputDats };
+module.exports = { getInputDats, getInputDatsByIndicator, registerInputDats,registerInputDatsMany, updateInputDat, updateInputDats };

@@ -39,7 +39,7 @@ const getBranch = async (req, res) => {
 
 const registerBranch = async (req, res) => {
     try {
-        const {name, description, address, email, manager, process, departament } = req.body;
+        const {name, description, address, email, manager, process, departament, company } = req.body;
         //We need to check if the departament exist
         const findDepartament = await Departament.findById(departament);
         if (!findDepartament) return res.status(400).send({ message: 'Departament not found ' });
@@ -53,6 +53,7 @@ const registerBranch = async (req, res) => {
             manager,
             process,
             departament,
+            company,
         });
         const savedBranch = await branch.save();
         if (!savedBranch) return res.status(400).send({ message: 'Branch not saved' });
