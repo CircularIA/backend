@@ -7,7 +7,7 @@ const IndicatorsSchema = new mongoose.Schema({
     source: { type: String }, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
     //Definir como requerida la categoria
     categorie: {type: String, required: true}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
-    sourceType: { type: String }, //Tipo de fuente (Flujos, Agua, Emisiones)
+    sourceType: { type: String }, //Tipo de fuente (Residuos, Flujos, Emisiones)
     description: { type: String }, //Descripcion del indicador
     measurement: { type: String }, //Unidad de medida del indicador
     inputDats: [{

@@ -1,6 +1,6 @@
-const { InputDat } = require('../models/inputDat');
-const { Branch } = require('../models/branch');
-const { Indicator } = require('../models/indicator');
+const { InputDat } = require('../models/InputDat');
+const { Branch } = require('../models/Branch');
+const { Indicator } = require('../models/Indicator');
 const mongoose = require('mongoose');
 
 const getInputDats = async (req, res) => {
@@ -127,6 +127,10 @@ const registerInputDats = async (req, res) => {
             company,
             branch,
         });
+        //! Probar como funciona esta validacion
+        //Validate the input dat values using schema validator of mongoose
+        const validationError = inputDat.validateSync();
+        if (validationError) return res.status(400).send({ message: validationError.message });
         const inputDatExist = await InputDat.findOne({ name });
         //If the input exits we have to check if the measurement is the same
         if (inputDatExist) {

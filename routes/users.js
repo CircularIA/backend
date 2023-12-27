@@ -1,11 +1,12 @@
-const router = require('express').Router();
+import express from 'express';
+const router = express.Router();
 
-const {getUser, createUser, createOwnerUser } = require('../controllers/users');
-const verifyToken = require('../middlewares/verifyToken.js');
+import { getUser, createUser, createOwnerUser } from '../controllers/users.js';
+import verifyToken from '../middlewares/verifyToken.js';
 //Want to protect the get user endpoint
 
 router.get('/', verifyToken, getUser);
 router.post('/', createUser);
 router.post('/owner', createOwnerUser);
 
-module.exports = router;
+export default router;

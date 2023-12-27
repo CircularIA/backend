@@ -1,10 +1,10 @@
-const { Company } = require('../models/company');
-const { Branch } = require('../models/branch');
-const { User } = require('../models/user');
-const { Departament } = require('../models/departament');
-const mongoose = require('mongoose');
+import { Company } from '../models/Company';
+import { Branch } from '../models/Branch';
+import { User } from '../models/User';
+import { Departament } from '../models/Departament';
+import { Types } from 'mongoose';
 
-const registerCompany = async (req, res) => {
+export const registerCompany = async (req, res) => {
     try {
         const {
             rut,
@@ -20,7 +20,7 @@ const registerCompany = async (req, res) => {
         if (company) return res.status(400).send({ message: 'Company already exist' });
         //Have to create a new departament, by default, sostenibilidad
         const newDepartament = await new Departament({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             code: '000',
             name: 'Sostenibilidad',
             description: 'Departamento de sostenibilidad',
@@ -32,7 +32,7 @@ const registerCompany = async (req, res) => {
         if (!departament) return res.status(400).send({ message: 'Failed to register departament' });
         //Have to create a new standart branch
         const initialBranch = new Branch({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             code: '000',
             name: 'Principal',
             description: 'Sucursal principal',
@@ -46,7 +46,7 @@ const registerCompany = async (req, res) => {
         const updateDepartament = await Departament.findByIdAndUpdate(departament._id, { branch: branch._id });
         //Assosiate the branch to the company
         const newCompany = new Company({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             rut,
             name,
             typeIndustry,
@@ -66,7 +66,7 @@ const registerCompany = async (req, res) => {
     }
 }
 
-const getCompany = async (req, res) => {
+export const getCompany = async (req, res) => {
     try {
         console.log("get company")
         const {user} = req;
@@ -96,7 +96,7 @@ const getCompany = async (req, res) => {
     }
 }
 
-const updatecompany = async (req,res) => {
+export const updatecompany = async (req,res) => {
     try {
         const {
             rut,
@@ -133,5 +133,3 @@ const updatecompany = async (req,res) => {
         return res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-
-module.exports = { getCompany, registerCompany, updatecompany};

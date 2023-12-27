@@ -1,11 +1,13 @@
-const router = require('express').Router();
+const express = require('express');
+const router = express.Router();
 
 const verifyToken = require('../middlewares/verifyToken.js');
-const { getBranch, getIndicators, registerBranch, updateBranch } = require('../controllers/branch');
+
+import { getBranch, getIndicators, registerBranch, updateBranch } from '../controllers/branch';
 
 router.get('/', verifyToken, getBranch);
 router.get('/indicators/:id', getIndicators);
 router.post('/registerBranch', registerBranch);
 router.put('/updateBranch', verifyToken, updateBranch);
 
-module.exports = router;
+export default router;

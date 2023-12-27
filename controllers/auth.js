@@ -1,9 +1,17 @@
 const router = require('express').Router();
-const { User } = require('../models/user');
+const { User } = require('../models/User');
 const Joi = require('joi');
 const bcrypt = require('bcrypt');
 
-const validateUser = async (req, res) => {
+const validate = (data) => {
+    const Schema = Joi.object({
+        email: Joi.string().required().email().label('Email'),
+        password: Joi.string().required().label('Password'),
+    });
+    return Schema.validate(data);
+}
+
+export const login = async (req, res) => {
     try {
         const {error} = validate(req.body);
         if(error)
@@ -23,14 +31,3 @@ const validateUser = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-
-
-const validate = (data) => {
-    const Schema = Joi.object({
-        email: Joi.string().required().email().label('Email'),
-        password: Joi.string().required().label('Password'),
-    });
-    return Schema.validate(data);
-}
-
-module.exports = {validateUser};

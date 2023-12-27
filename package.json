@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "NODE_ENV=development nodemon -r dotenv/config index.js dotenv_config_path=./.env.development",
-    "start": "NODE_ENV=production nodemon -r dotenv/config index.js dotenv_config_path=./.env.production",
+    "start": "NODE_ENV=production nodemon -r dotenv/config index.js dotenv_config_path=./.env",
     "dev:win": "cross-env NODE_ENV=development nodemon -r dotenv/config index.js dotenv_config_path=./.env.development"
   },
   "keywords": [],
@@ -14,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.0",
+    "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

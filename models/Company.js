@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 const {Schema} = mongoose;
 
 const companySchema = new mongoose.Schema({
@@ -95,5 +95,4 @@ const companySchema = new mongoose.Schema({
 // Have to definy methods for specific functions
 const Company = mongoose.model('Company', companySchema);
 
-module.exports = {Company};
-
+export default Company;

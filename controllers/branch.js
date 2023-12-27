@@ -1,7 +1,7 @@
-const {Branch} = require('../models/branch');
-const { User} = require('../models/user');
-const {Company} = require('../models/company');
-const {Departament} = require('../models/departament');
+const {Branch} = require('../models/Branch');
+const { User} = require('../models/User');
+const {Company} = require('../models/Company');
+const {Departament} = require('../models/Departament');
 
 const mongoose = require('mongoose');
 const getBranch = async (req, res) => {

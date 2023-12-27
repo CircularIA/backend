@@ -1,6 +1,6 @@
-const { Indicator } = require('../models/indicator');
-const { Branch } = require('../models/branch');
-const { InputDat } = require('../models/inputDat');
+const { Indicator } = require('../models/Indicator');
+const { Branch } = require('../models/Branch');
+const { InputDat } = require('../models/InputDat');
 const mongoose = require('mongoose');
 
 const getIndicators = async (req, res) => {
