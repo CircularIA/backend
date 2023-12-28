@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
-const {Schema} = mongoose;
+import { Schema, model } from 'mongoose';
 
-const companySchema = new mongoose.Schema({
+const companySchema = new Schema({
     _id: Schema.Types.ObjectId,
     rut: {type: String, required: true},
     name: {type: String, required: true},
@@ -93,6 +92,6 @@ const companySchema = new mongoose.Schema({
 })
 
 // Have to definy methods for specific functions
-const Company = mongoose.model('Company', companySchema);
+const Company = model('Company', companySchema);
 
 export default Company;

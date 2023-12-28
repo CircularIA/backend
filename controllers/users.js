@@ -1,7 +1,9 @@
-import User from '../models/User.js';
-import bcrypt from 'bcrypt';
+//Packages
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+
 //Models
+import User from '../models/User.js';
 import Company from '../models/Company.js';
 
 //This is to create a user in the database with form register

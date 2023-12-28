@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import passwordComplexity from 'joi-password-complexity';
@@ -6,8 +6,8 @@ import passwordComplexity from 'joi-password-complexity';
 //Others models
 import Company from './Company.js';
 
-const userSchema = new mongoose.Schema({
-    _id: mongoose.Schema.Types.ObjectId,
+const userSchema = new Schema({
+    _id: Schema.Types.ObjectId,
     fullName:{
         type: String,
         required: [true, 'Full name is required'],
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema({
     },
     //Company information
     company: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Company',
         required: [true, 'Company is required'],
         //Validate if the company exist
@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema({
     sourceType:[
         {
             branch: {
-                type: mongoose.Schema.Types.ObjectId,
+                type: Schema.Types.ObjectId,
                 ref: 'Branch',
             },
             sourceType: {
@@ -96,5 +96,6 @@ userSchema.methods.refreshToken = function(){
     return { token, userId: this._id, userType: this.type, userActive: this.active};
 }
 
-const User = mongoose.model('User', userSchema);
+const User = model('User', userSchema);
+
 export default User;

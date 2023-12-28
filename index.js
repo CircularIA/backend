@@ -6,12 +6,11 @@ import compression from 'compression';
 //Routes
 import userRoutes from './routes/users.js';
 import companyRoutes from './routes/company.js';
-
-const branchRoutes = require('./routes/branch');
-const authRoutes = require('./routes/auth').default;
-const indicatorRoutes = require('./routes/indicator');
-const inputDatRoutes = require('./routes/inputDats');
-const mailRoutes = require('./routes/mail');
+import branchRoutes from './routes/branch.js';
+import authRoutes from './routes/auth.js';
+import indicatorRoutes from './routes/indicator.js';
+import inputDatRoutes from './routes/inputDats.js';;
+// const mailRoutes = require('./routes/mail');
 
 
 //Define the environment
@@ -40,7 +39,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/branch', branchRoutes);
-app.use('/api/mail', mailRoutes);
+// app.use('/api/mail', mailRoutes);
 app.use('/api/indicator', indicatorRoutes);
 app.use('/api/inputDat', inputDatRoutes);
 

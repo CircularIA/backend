@@ -1,9 +1,11 @@
-const { InputDat } = require('../models/InputDat');
-const { Branch } = require('../models/Branch');
-const { Indicator } = require('../models/Indicator');
-const mongoose = require('mongoose');
+import { Types, startSession } from 'mongoose';
 
-const getInputDats = async (req, res) => {
+//Models
+import  InputDat  from '../models/InputDat.js';
+import  Branch  from '../models/Branch.js';
+import  Indicator  from '../models/Indicator.js';
+
+export const getInputDats = async (req, res) => {
     try {
         const { branch } = req.params;
         const inputDats = await InputDat.find({ branch });
@@ -19,7 +21,7 @@ const getInputDats = async (req, res) => {
 //Si se recibe el año, obtener todos los datos del año
 //Si se recibe el año y el mes, obtener todos los datos del mes
 //Si se recibe el año, el mes y el dia, obtener todos los datos del dia
-const getInputDatsByIndicator = async (req, res) => {
+export const getInputDatsByIndicator = async (req, res) => {
     try {
         //Obtener los input dats de un indicador en una fecha
         const branch = req.params.branch;
@@ -37,8 +39,8 @@ const getInputDatsByIndicator = async (req, res) => {
             const inputDats = await InputDat.aggregate([
                 {
                     $match: {
-                        indicator: new mongoose.Types.ObjectId(indicator),
-                        branch: new mongoose.Types.ObjectId(branch),
+                        indicator: new Types.ObjectId(indicator),
+                        branch: new Types.ObjectId(branch),
                     }
                 }
             ])    
@@ -56,8 +58,8 @@ const getInputDatsByIndicator = async (req, res) => {
                             $gte: startDate,
                             $lte: endDate,
                         },
-                        indicator: new mongoose.Types.ObjectId(indicator),
-                        branch: new mongoose.Types.ObjectId(branch),
+                        indicator: new Types.ObjectId(indicator),
+                        branch: new Types.ObjectId(branch),
                     }
                 }
             ])
@@ -76,8 +78,8 @@ const getInputDatsByIndicator = async (req, res) => {
                             $gte: startDate,
                             $lte: endDate,
                         },
-                        indicator: new mongoose.Types.ObjectId(indicator),
-                        branch: new mongoose.Types.ObjectId(branch),
+                        indicator: new Types.ObjectId(indicator),
+                        branch: new Types.ObjectId(branch),
                     }
                 }
             ])
@@ -97,8 +99,8 @@ const getInputDatsByIndicator = async (req, res) => {
                             $gte: startDate,
                             $lte: endDate,
                         },
-                        indicator: new mongoose.Types.ObjectId(indicator),
-                        branch: new mongoose.Types.ObjectId(branch),
+                        indicator: new Types.ObjectId(indicator),
+                        branch: new Types.ObjectId(branch),
                     }
                 }
             ])
@@ -110,7 +112,7 @@ const getInputDatsByIndicator = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-const registerInputDats = async (req, res) => {
+export const registerInputDats = async (req, res) => {
     try {
         const { name, value, date, measurement, company, branch, indicator } = req.body;
         //We need to check if the departament exist
@@ -118,7 +120,7 @@ const registerInputDats = async (req, res) => {
         if (!branch) return res.status(400).send({ message: 'Branch is required' });
         if (!indicator) return res.status(400).send({ message: 'Indicator is required' });
         const inputDat = new InputDat({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             name,
             value,
             date,
@@ -164,7 +166,7 @@ const registerInputDats = async (req, res) => {
 }
 
 //Endpoint para registrar varios datos de entrada
-const registerInputDatsMany = async (req, res) => {
+export const registerInputDatsMany = async (req, res) => {
     //const { name, value, date, measurement, company, branch, indicator } = req.body;
     //Hay valores que son generales, como la compañia, la sucursal y el indicador
     const {
@@ -182,7 +184,7 @@ const registerInputDatsMany = async (req, res) => {
     if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
     
     //Iniciar la transacción de mongo
-    const session = await mongoose.startSession();
+    const session = await startSession();
     
     try {
         await session.withTransaction(async () => {
@@ -203,7 +205,7 @@ const registerInputDatsMany = async (req, res) => {
 
 
                 const newInputDat = new InputDat({
-                    _id: new mongoose.Types.ObjectId(),
+                    _id: new Types.ObjectId(),
                     name,
                     code: existingInputDats ? existingInputDats.code : undefined,
                     value,
@@ -226,7 +228,7 @@ const registerInputDatsMany = async (req, res) => {
     }
 }
 
-const updateInputDat = async (req, res) => {
+export const updateInputDat = async (req, res) => {
     try {
         //El formato sera un objeto
         const { id } = req.params;
@@ -246,7 +248,7 @@ const updateInputDat = async (req, res) => {
     }
 }
 
-const updateInputDats = async (req, res) => {
+export const updateInputDats = async (req, res) => {
     try {
         //El formato sera un arreglo de objetos
         const { inputDats } = req.body;
@@ -269,5 +271,3 @@ const updateInputDats = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-
-module.exports = { getInputDats, getInputDatsByIndicator, registerInputDats,registerInputDatsMany, updateInputDat, updateInputDats };

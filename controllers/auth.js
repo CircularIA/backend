@@ -1,7 +1,8 @@
-const router = require('express').Router();
-const { User } = require('../models/User');
-const Joi = require('joi');
-const bcrypt = require('bcrypt');
+//Packages
+import Joi from 'joi';
+import bcrypt from 'bcrypt';
+//Models
+import  User  from '../models/User.js';
 
 const validate = (data) => {
     const Schema = Joi.object({

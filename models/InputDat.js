@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const {Schema} = mongoose;
+import { Schema, model } from "mongoose";
 
-const InputdatSchema = new mongoose.Schema({
+const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
     //Codigo que permitira identificar cada dato de entrada
     code: {type: Number},
@@ -40,6 +39,6 @@ InputdatSchema.pre('save', async function (next) {
     }
 });
 
-const InputDat = mongoose.model('InputDat', InputdatSchema);
+const InputDat = model('InputDat', InputdatSchema);
 
-module.exports = {InputDat};
+export default InputDat;

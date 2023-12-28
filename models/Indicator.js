@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+import { Schema, model } from 'mongoose';
 
-const IndicatorsSchema = new mongoose.Schema({
+const IndicatorsSchema = new Schema({
     _id: Schema.Types.ObjectId,
     name: { type: String, unique: true },
     source: { type: String }, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
@@ -24,6 +23,6 @@ const IndicatorsSchema = new mongoose.Schema({
     }]  
 })
 
-const Indicator = mongoose.model('Indicators', IndicatorsSchema);
+const Indicator = model('Indicators', IndicatorsSchema);
 
-module.exports = {Indicator};
+export default Indicator;

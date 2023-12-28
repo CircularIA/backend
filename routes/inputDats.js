@@ -1,8 +1,10 @@
-const router = require('express').Router();
+import express from 'express';
+const router = express.Router();
 
-const verifyToken = require('../middlewares/verifyToken.js');
+import verifyToken from '../middlewares/verifyToken.js';
 
-const { getInputDats, getInputDatsByIndicator, registerInputDats, registerInputDatsMany, updateInputDat, updateInputDats } = require('../controllers/inputDat');
+//Controllers
+import { getInputDats, getInputDatsByIndicator, registerInputDats, updateInputDat, updateInputDats, registerInputDatsMany } from '../controllers/inputDat.js';
 
 router.get('/:branch', getInputDats);
 router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', getInputDatsByIndicator);
@@ -11,5 +13,4 @@ router.post('/many/:branch/:indicator', registerInputDatsMany);
 router.post('/update/:id', updateInputDat);
 router.post('/update', updateInputDats);
 
-
-module.exports = router;
+export default router;

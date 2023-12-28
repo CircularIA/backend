@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+import { model, Schema } from "mongoose";
 
-const branchSchema = new mongoose.Schema({
+const branchSchema = new Schema({
     _id: Schema.Types.ObjectId,
     //Codigo de sucursal
     code: { type: String, unique: true },
@@ -47,6 +46,6 @@ branchSchema.pre('save', async function (next) {
     }
 });
 
-const Branch = mongoose.model('Branch', branchSchema);
+const Branch = model('Branch', branchSchema);
 
-module.exports = { Branch };
+export default Branch;

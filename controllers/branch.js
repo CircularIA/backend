@@ -1,17 +1,19 @@
-const {Branch} = require('../models/Branch');
-const { User} = require('../models/User');
-const {Company} = require('../models/Company');
-const {Departament} = require('../models/Departament');
+//Packages
+import {Types} from 'mongoose';
 
-const mongoose = require('mongoose');
-const getBranch = async (req, res) => {
+//Models
+import  Branch  from '../models/Branch.js';
+import  User  from '../models/User.js';
+import  Company  from '../models/Company.js';
+import  Departament  from '../models/Departament.js';
+
+export const getBranch = async (req, res) => {
     try {
         //Depending of the user type and the user id, we have to return the branches
         //How this endpoint pass for the middle ware, we can obtain the user id
         const {user} = req;
         const findUser = await User.findById(user._id).populate('company').populate('departament');
         if (!findUser) return res.status(400).send({ message: 'User not found' });
-        console.log("user", findUser)
         // *if user is type 0, return whole branch
         if (findUser.type === 0){
             const branches = await Branch.find();
@@ -37,7 +39,7 @@ const getBranch = async (req, res) => {
     }
 }
 
-const registerBranch = async (req, res) => {
+export const registerBranch = async (req, res) => {
     try {
         const {name, description, address, email, manager, process, departament, company } = req.body;
         //We need to check if the departament exist
@@ -45,7 +47,7 @@ const registerBranch = async (req, res) => {
         if (!findDepartament) return res.status(400).send({ message: 'Departament not found ' });
 
         const branch = new Branch({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             name,
             description,
             address,
@@ -72,7 +74,7 @@ const registerBranch = async (req, res) => {
     }
 }
 
-const updateBranch = async (req, res) => {
+export const updateBranch = async (req, res) => {
     try {
         const {name, description, address, email, manager, process, departament } = req.body;
         const {id} = req.params;
@@ -97,7 +99,7 @@ const updateBranch = async (req, res) => {
     }
 }
 
-const getIndicators = async (req, res) => {
+export const getIndicators = async (req, res) => {
     try {
         const {id} = req.params;
         //We need to check if the branch exist
@@ -109,5 +111,3 @@ const getIndicators = async (req, res) => {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
-
-module.exports = { getBranch, getIndicators, registerBranch, updateBranch };

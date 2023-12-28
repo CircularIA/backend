@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
+import { Schema, model } from 'mongoose';
 
-const departamentSchema = new mongoose.Schema({
+const departamentSchema = new Schema({
     _id: Schema.Types.ObjectId,
     code: { type: String },
     name: { type: String },
@@ -25,6 +24,6 @@ const departamentSchema = new mongoose.Schema({
     },
 })
 
-const Departament = mongoose.model('Departament', departamentSchema);
+const Departament = model('Departament', departamentSchema);
 
-module.exports = { Departament };
+export default { Departament };

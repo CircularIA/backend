@@ -1,11 +1,13 @@
-const router = require('express').Router();
-const verifyToken = require('../middlewares/verifyToken.js');
+import express from 'express';
+const router = express.Router();
 
-const { getIndicators, getIndicatorValue,  registerIndicator } = require('../controllers/indicator');
+import verifyToken from '../middlewares/verifyToken.js';
+//Controllers
+import { getIndicators, getIndicatorValue,  registerIndicator } from '../controllers/indicator.js';
 
 router.get('/', getIndicators);
 router.get('/values/:branch/:indicator/:year/:month?', getIndicatorValue);
 router.post('/', registerIndicator);
 //router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', getInputDatsByIndicator);
 
-module.exports = router;
+export default router;

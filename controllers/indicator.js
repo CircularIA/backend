@@ -1,9 +1,12 @@
-const { Indicator } = require('../models/Indicator');
-const { Branch } = require('../models/Branch');
-const { InputDat } = require('../models/InputDat');
-const mongoose = require('mongoose');
+//Packages
+import { Types } from 'mongoose';
 
-const getIndicators = async (req, res) => {
+//Models
+import  Indicator  from '../models/Indicator.js';
+import  Branch  from '../models/Branch.js';
+import  InputDat  from '../models/InputDat.js';
+
+export const getIndicators = async (req, res) => {
     try {
         //Se obtendra todos los indicadores
         const indicators = await Indicator.find();
@@ -15,7 +18,7 @@ const getIndicators = async (req, res) => {
     }
 }
 
-const getValue = (name, inputDatsValues) => {
+export const getValue = (name, inputDatsValues) => {
     //El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
     console.log("nombre indicador ", name)
     if (name === 'porcentaje de valorizacion ciclo biologico') {
@@ -76,7 +79,7 @@ const monthNumberToName = (monthNumber) => {
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
     return monthNames[monthNumber];
 }
-const getIndicatorValue = async (req, res) => {
+export const getIndicatorValue = async (req, res) => {
     try {
         console.log("entrada", req.body)
         //Se obtendra todos los indicadores
@@ -169,7 +172,7 @@ const getIndicatorValue = async (req, res) => {
     }
 }
 
-const registerIndicator = async (req, res) => {
+export const registerIndicator = async (req, res) => {
     try {
         const { name, formula, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
         //We need to check if the departament exist
@@ -189,7 +192,7 @@ const registerIndicator = async (req, res) => {
             //If the input data exist we have to check if the measurement is the same
             if (!inputDatExist) {
                 const newInputDat = new InputDat({
-                    _id: new mongoose.Types.ObjectId(),
+                    _id: new Types.ObjectId(),
                     name,
                     measurement,
                 })
@@ -205,7 +208,7 @@ const registerIndicator = async (req, res) => {
         }
         console.log("inputDats", inputDats)
         const newIndicator = new Indicator({
-            _id: new mongoose.Types.ObjectId(),
+            _id: new Types.ObjectId(),
             name,
             formula,
             source,
@@ -223,10 +226,4 @@ const registerIndicator = async (req, res) => {
         console.log("error", error)
         res.status(500).send({ message: 'Internal Server Error' });
     }
-}
-
-module.exports = {
-    getIndicators,
-    getIndicatorValue,
-    registerIndicator,
 }

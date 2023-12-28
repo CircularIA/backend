@@ -1,8 +1,11 @@
-import { Company } from '../models/Company';
-import { Branch } from '../models/Branch';
-import { User } from '../models/User';
-import { Departament } from '../models/Departament';
+//Packages
 import { Types } from 'mongoose';
+
+//Models
+import  Company  from '../models/Company.js';
+import  Branch  from '../models/Branch.js';
+import User  from '../models/User.js';
+import Departament from '../models/Departament.js';
 
 export const registerCompany = async (req, res) => {
     try {

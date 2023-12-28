@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const verifyToken = require('../middlewares/verifyToken.js');
+import verifyToken from '../middlewares/verifyToken.js';
 
-import { getBranch, getIndicators, registerBranch, updateBranch } from '../controllers/branch';
+//Controllers
+import { getBranch, getIndicators, registerBranch, updateBranch } from '../controllers/branch.js';
 
 router.get('/', verifyToken, getBranch);
 router.get('/indicators/:id', getIndicators);
