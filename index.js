@@ -10,7 +10,7 @@ import branchRoutes from './routes/branch.js';
 import authRoutes from './routes/auth.js';
 import indicatorRoutes from './routes/indicator.js';
 import inputDatRoutes from './routes/inputDats.js';;
-// const mailRoutes = require('./routes/mail');
+import mailRoutes from './routes/mail.js';
 
 
 //Define the environment

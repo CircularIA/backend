@@ -9,9 +9,9 @@ import Company from '../models/Company.js';
 //This is to create a user in the database with form register
 export const createUser = async (req, res) => {
     try {
+        console.log(req.body);
         const { error } = User.validate(req.body);
-        if (error)
-            return res.status(400).send(error.details[0].message);
+        console.log(error);
         //Create a new user
         const salt = await bcrypt.genSalt(Number(process.env.SALT));
         const hashedPassword = await bcrypt.hash(req.body.password, salt);

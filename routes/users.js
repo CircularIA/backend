@@ -7,7 +7,7 @@ import verifyToken from '../middlewares/verifyToken.js';
 //Want to protect the get user endpoint
 
 router.get('/', getUser);
-router.post('/', createUser);
-router.post('/owner', createOwnerUser);
+router.post('/create', createUser);
+router.post('/createOwner', createOwnerUser);
 
 export default router;

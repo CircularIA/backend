@@ -3,12 +3,9 @@ import jwt from 'jsonwebtoken';
 import Joi from 'joi';
 import passwordComplexity from 'joi-password-complexity';
 
-//Others models
-import Company from './Company.js';
-
 const userSchema = new Schema({
     _id: Schema.Types.ObjectId,
-    fullName:{
+    username:{
         type: String,
         required: [true, 'Full name is required'],
     },
@@ -16,21 +13,18 @@ const userSchema = new Schema({
         type: String,
         required: [true, 'Email is required'],
         unique: [true, 'Email already registered'],
-        validate: {
-            validator: function(v){
-                return /^([\w-\.]+@([\w-]+\.)+[\w-]{2,4})?$/.test(v);
-            },
-            message: 'Invalid email',
-        }
     },
     password:{
         type: String,
         required: [true, 'Password is required'],
-        vaidate: passwordComplexity(),
     },
     //Define forget password atribute
-    forgetPassword: {
+    resetPasswordToken: {
         type: String,
+        default: '',
+    },
+    resetPasswordExpires: {
+        type: Date,
         default: '',
     },
     //Company information
@@ -38,28 +32,14 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Company',
         required: [true, 'Company is required'],
-        //Validate if the company exist
-        validate: {
-            validator: async function(v){
-                const company = await Company.findById(v);
-                return company;
-            },
-            message: 'Invalid company',
-        },
     },
     //Type of user
     //0: Admin
     //1: Owner of company
     //2: Regular user
-    type:{
+    role:{
         type: Number,
         required: [true, 'User type is required'],
-        validate: {
-            validator: function(v){
-                return v == 0 || v == 1 || v == 2;
-            },
-            message: 'Invalid user type',
-        },
     },
     //Flag to know if the user is active or not
     active:{
@@ -87,13 +67,39 @@ const userSchema = new Schema({
 });
 
 userSchema.methods.generateAuthToken = function(){
-    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: '12h'});
-    return { token, userId: this._id, userType: this.type, userActive: this.active};
+    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
+    return { token, userId: this._id, userRole: this.role, userActive: this.active};
 }
 
 userSchema.methods.refreshToken = function(){
-    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: '12h'});
-    return { token, userId: this._id, userType: this.type, userActive: this.active};
+    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
+    return { token, userId: this._id, userRole: this.role, userActive: this.active};
+}
+
+userSchema.methods.generatePasswordReset = function(){
+    const token = jwt.sign({_id: this._id}, process.env.RESET_PASSWORD_KEY, {expiresIn: process.env.RESET_PASSWORD_EXPIRES_IN});
+    return token;
+}
+
+//Static method to validate the user data
+userSchema.statics.validate = function(data){
+    const Schema = Joi.object({
+        username: Joi.string().required().label('Username').messages({'string.empty': 'Username is required'}),
+        email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
+        password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
+        company: Joi.string().required().label('Company').messages({'string.empty': 'Company is required'}),
+        role: Joi.number().required().min(1).max(2).integer().label('User type').messages({'string.empty': 'User type is required'}),
+    });
+    return Schema.validate(data);
+}
+//Static method to validate the password reset
+userSchema.statics.validatePasswordReset = function(data){
+    const Schema = Joi.object({
+        token: Joi.string().required().label('Token').messages({'string.empty': 'Token is required'}),
+        password: passwordComplexity().required().label('Password').messages({'string.empty': 'Password is required'}),
+        confirmPassword: Joi.ref('password'),
+    });
+    return Schema.validate(data);
 }
 
 const User = model('User', userSchema);
