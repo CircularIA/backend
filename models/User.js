@@ -34,11 +34,13 @@ const userSchema = new Schema({
         required: [true, 'Company is required'],
     },
     //Type of user
-    //0: Admin
-    //1: Owner of company
-    //2: Regular user
+    //Admin
+    //Owner of company
+    //Regular user
     role:{
-        type: Number,
+        type: String,
+        enum: ['Admin', 'Owner', 'Regular'],
+        default: 'Regular',
         required: [true, 'User type is required'],
     },
     //Flag to know if the user is active or not
@@ -68,12 +70,12 @@ const userSchema = new Schema({
 
 userSchema.methods.generateAuthToken = function(){
     const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
-    return { token, userId: this._id, userRole: this.role, userActive: this.active};
+    return { token, userId: this._id, userRole: this.role};
 }
 
 userSchema.methods.refreshToken = function(){
     const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
-    return { token, userId: this._id, userRole: this.role, userActive: this.active};
+    return { token, userId: this._id, userRole: this.role};
 }
 
 userSchema.methods.generatePasswordReset = function(){

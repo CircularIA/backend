@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import Joi from 'joi';
 
 const branchSchema = new Schema({
     _id: Schema.Types.ObjectId,
@@ -8,13 +9,14 @@ const branchSchema = new Schema({
     company: {
         type: Schema.Types.ObjectId,
         ref: 'Company',
-        required: true,
+        required: [true, 'Company is required'],
     },
     //Nombre de sucursal
-    name: { type: String },
+    name: { type: String, required: [true, 'Name is required'] },
     description: { type: String },
     address: { type: String },
-    email: { type: String },
+    email: { type: String},
+    //Persona responsable de la sucursal
     manager: {
         name: { type: String },
         email: { type: String },
@@ -23,12 +25,22 @@ const branchSchema = new Schema({
     indicators: [{
         type: Schema.Types.ObjectId,
         ref: 'Indicators',
+        sourceType: { type: String },
+        active: { type: Boolean, default: true },
+        activeRegisters: {
+            date: { type: Date }, //Fecha de activacion (año, mes, dia)
+            value: { type: Boolean, default: true }, //Valor de activacion
+            user: { //Usuario que activo el indicador
+                name: { type: String },
+                email: { type: String },
+            }
+        },
     }],
-    //Departament of the branch
-    departament: {
+    //Users assigned to the branch
+    asignedUsers: [{
         type: Schema.Types.ObjectId,
-        ref: 'Departament',
-    },
+        ref: 'User',
+    }],
 })
 
 //Middleware para generar el codigo antes de guardar
@@ -45,6 +57,22 @@ branchSchema.pre('save', async function (next) {
         }
     }
 });
+
+//Methods of validate
+branchSchema.statics.validateBranch = async function (id) {
+    const Schema = Joi.object({
+        name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+        company: Joi.string().required().label('Company'),
+        description: Joi.string().label('Description'),
+        address: Joi.string().label('Address'),
+        email: Joi.string().email().label('Email'),
+        manager: Joi.object({
+            name: Joi.string().label('Manager name'),
+            email: Joi.string().email().label('Manager email'),
+        }),
+        asignedUsers: Joi.array().items(Joi.string()).label('Asigned users'),
+    })    
+}
 
 const Branch = model('Branch', branchSchema);
 

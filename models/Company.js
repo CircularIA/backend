@@ -2,9 +2,9 @@ import { Schema, model } from 'mongoose';
 
 const companySchema = new Schema({
     _id: Schema.Types.ObjectId,
-    rut: {type: String, required: true},
+    rut: {type: String, required: [true, 'Rut Company is required'], unique: true},
     name: {type: String, required: true},
-    email: {type: String, required: true},
+    email: {type: String, required: true, unique: true},
     image: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte
@@ -53,40 +53,28 @@ const companySchema = new Schema({
     proyectosECI: [{
         proyecto: {type: String},
     }],
-    //Culturizacion de empleados en aspectos de sostenibilidad 
-    //Optimizacion de transporte
-    //Reduccion de agua
-    //Indicadores que calcula la empresa
-    // ! ojo con esta definicion, aun falta definir la conexion con los indicadores
-    indicators: [{
-        name: {type: String},
-        formula: {type: String},
-        source: {type: String}, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
-        categorie: {type: String}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
-        sourceType: {type: String}, //Tipo de fuente (Flujos, Agua, Emisiones)
-        description: {type: String}, //Descripcion del indicador
-        measurement: {type: String}, //Unidad de medida del indicador
-    }],
-    //*Atributo que indique si la empresa tiene un departamento de innovacion y/o desarrollo
-    innovationDepartament: {type: Boolean},
-    //Owner user
+    //Usuario dueño
     ownerUser: {
         //Just need the email and name, no validate or passwords
         name: {type: String},
         email: {type: String},
     },
+    //*Indicadores que calcula la empresa con la finalidad de tenerlos de manera general
+    indicators: [{
+        indicator:{
+            type: Schema.Types.ObjectId,
+            ref: 'Indicator',
+        }, 
+        branch: {
+            type: Schema.Types.ObjectId,
+            ref: 'Branch',
+        },
+    }],
     //Company branches
     branches: [
         {
             type: Schema.Types.ObjectId,
             ref: 'Branch',
-        }
-    ],
-    //Company departaments
-    departaments: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: 'Departament',
         }
     ],
 })

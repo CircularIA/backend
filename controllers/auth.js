@@ -21,6 +21,9 @@ export const login = async (req, res) => {
         const user = await User.findOne({email: req.body.email});
         if (!user)
             return res.status(401).send('Invalid email or password.');
+        if (user.active === false){
+            return res.status(401).send('Your account is not active.');
+        }
         const validPassword = await bcrypt.compare(req.body.password, user.password);
         if (!validPassword)
             return res.status(401).send('Invalid email or password.');
@@ -29,6 +32,15 @@ export const login = async (req, res) => {
         // Configura la cookie segura con HttpOnly y Secure true al usar HTTPS
         res.cookie('token', token, { httpOnly: true });
         res.status(200).send({ data: token, message: 'Login successful.' });
+    } catch (error) {
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
+export const logout = async (req, res) => {
+    try {
+        res.clearCookie('token');
+        res.status(200).send({ message: 'Logout successful.' });
     } catch (error) {
         res.status(500).send({ message: 'Internal Server Error' });
     }

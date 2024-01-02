@@ -9,6 +9,7 @@ import Departament from '../models/Departament.js';
 
 export const registerCompany = async (req, res) => {
     try {
+        //!Se necesita un usuario de tipo Owner para poder registrar una empresa
         const {
             rut,
             name,

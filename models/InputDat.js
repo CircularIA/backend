@@ -4,13 +4,14 @@ const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
     //Codigo que permitira identificar cada dato de entrada
     code: {type: Number},
-    name: {type: String},
-    value: {type: Number},
-    date: {type: Date},
+    name: {type: String, required: [true, 'Name is required']},
+    value: {type: Number, required: [true, 'Value is required']},
+    date: {type: Date, default: Date.now},
     measurement: {type: String},
     indicator: {
         type: Schema.Types.ObjectId,
         ref: 'Indicator',
+        required: [true, 'Indicator is required'],
     },
     company: {
         type: Schema.Types.ObjectId,
@@ -20,9 +21,12 @@ const InputdatSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Branch',
     },
+    //Usuario que registro el dato de entrada
+    user: {
+        name: {type: String},
+        email: {type: String},
+    },
 }, {timestamps: true})
-
-//The code attribute is generated automatically
 
 //Middleware to generate the code before saving
 InputdatSchema.pre('save', async function (next) {

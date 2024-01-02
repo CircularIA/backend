@@ -5,43 +5,43 @@ import {Types} from 'mongoose';
 import  Branch  from '../models/Branch.js';
 import  User  from '../models/User.js';
 import  Company  from '../models/Company.js';
-import  Departament  from '../models/Departament.js';
 
 export const getBranch = async (req, res) => {
     try {
         //Depending of the user type and the user id, we have to return the branches
         //How this endpoint pass for the middle ware, we can obtain the user id
         const {user} = req;
-        const findUser = await User.findById(user._id).populate('company').populate('departament');
+        const findUser = await User.findById(user._id).populate('company');
         if (!findUser) return res.status(400).send({ message: 'User not found' });
         // *if user is type 0, return whole branch
-        if (findUser.type === 0){
+        if (findUser.role === 'Admin'){
             const branches = await Branch.find();
             if (!branches) return res.status(400).send({ message: 'Branch not found' });
             return res.status(200).send({ branches });
-        } else if(findUser.type === 1){
-            console.log("es tipo 1")
+        } else if(findUser.role === 'Owner'){
             // *This is a owner user, just return branch of the company associate it
             //The branches are associate with company atribute
-            const dataCompany = await Company.findById(findUser.company._id).populate('branches');
+            const dataCompany = await findUser.company.populate('branches');
             if (!dataCompany) return res.status(400).send({ message: 'Branch not found' });
-            return res.status(200).send({ branches: dataCompany.branches });
-        } else{
-            //*This is for restricted user, just return the branch associate with the departament
-            //The departament is associate with the user
-            const branches = await Branch.findById(findUser.departament.branch);
+            return res.status(200).send({ branches: dataCompany.branches});
+        } else if(findUser.role === 'Regular'){
+            //*This endpoint need to return the branches associate with the user 
+            //Check if the user is included in the assignedUser of branch
+            const branches = await Branch.find({asignedUsers: user._id});
             if (!branches) return res.status(400).send({ message: 'Branch not found' });
             return res.status(200).send({ branches });
+        } else {
+            return res.status(400).send({ message: 'User type not found' });
         }
     } catch (error) {
         console.log("error", error)
-        res.status(500).send({ message: 'Internal Server Error' });
+        res.status(500).send({ message: 'Internal Server Error', error: error.message });
     }
 }
 
 export const registerBranch = async (req, res) => {
     try {
-        const {name, description, address, email, manager, process, departament, company } = req.body;
+        const {name, company, description, address, email, manager} = req.body;
         //We need to check if the departament exist
         const findDepartament = await Departament.findById(departament);
         if (!findDepartament) return res.status(400).send({ message: 'Departament not found ' });
