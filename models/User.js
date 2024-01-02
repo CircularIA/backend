@@ -48,33 +48,41 @@ const userSchema = new Schema({
         type: Boolean,
         default: true,
     },
-    //Asigned source type to the user
-    //Just asigned if the user is a regular user
-    sourceType:[
-        {
-            branch: {
-                type: Schema.Types.ObjectId,
-                ref: 'Branch',
-            },
-            sourceType: {
-                type: String, 
-                required: true,
-            },
-            active: {
-                type: Boolean,
-                default: true,
+    //Indicators assigned to the user
+    //Indicators are assigned by the company owner
+    //Have to match with the indicators of the branch and the company
+    indicators: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Indicator',
+        sourceType: [{
+            type: String
+        }],
+        active: { type: Boolean, default: true },
+        activeRegisters: [{
+            date: { type: Date }, //Fecha de activacion (año, mes, dia)
+            value: { type: Boolean, default: true }, //Valor de activacion
+            user: { //Usuario que brindo el acceso al usuario
+                name: { type: String },
+                email: { type: String },
             }
-        }
-    ]
+        }],
+    }],
+    //Branches assigned to the user
+    //Branches are assigned by the company owner
+    //Have to match with the branches of the company
+    branches: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Branch',
+    }],
 });
 
 userSchema.methods.generateAuthToken = function(){
-    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
+    const token = jwt.sign({_id: this._id, role: this.role}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
     return { token, userId: this._id, userRole: this.role};
 }
 
 userSchema.methods.refreshToken = function(){
-    const token = jwt.sign({_id: this._id}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
+    const token = jwt.sign({_id: this._id, role:this.role}, process.env.JWT_KEY, {expiresIn: process.env.JWT_EXPIRES_IN});
     return { token, userId: this._id, userRole: this.role};
 }
 
@@ -84,15 +92,27 @@ userSchema.methods.generatePasswordReset = function(){
 }
 
 //Static method to validate the user data
-userSchema.statics.validate = function(data){
+userSchema.statics.validate = async function(data){
     const Schema = Joi.object({
         username: Joi.string().required().label('Username').messages({'string.empty': 'Username is required'}),
         email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
         password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
         company: Joi.string().required().label('Company').messages({'string.empty': 'Company is required'}),
-        role: Joi.number().required().min(1).max(2).integer().label('User type').messages({'string.empty': 'User type is required'}),
+        role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
     });
-    return Schema.validate(data);
+    return Schema.validateAsync(data);
+}
+
+userSchema.statics.validateRegularUser = async function(data){
+    const Schema = Joi.object({
+        username: Joi.string().required().label('Username').messages({'string.empty': 'Username is required'}),
+        email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
+        password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
+        company: Joi.string().required().label('Company').messages({'string.empty': 'Company is required'}),
+        role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
+        indicators: Joi.array().label('Indicators').messages({'string.empty': 'Indicators is required'}),
+        branches: Joi.array().label('Branches').messages({'string.empty': 'Branches is required'}),
+    });
 }
 //Static method to validate the password reset
 userSchema.statics.validatePasswordReset = function(data){

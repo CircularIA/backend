@@ -9,20 +9,23 @@ import  Company  from '../models/Company.js';
 export const getBranch = async (req, res) => {
     try {
         //Depending of the user type and the user id, we have to return the branches
-        //How this endpoint pass for the middle ware, we can obtain the user id
         const {user} = req;
         const findUser = await User.findById(user._id).populate('company');
         if (!findUser) return res.status(400).send({ message: 'User not found' });
-        // *if user is type 0, return whole branch
+        // *if user is admin, return all branches
         if (findUser.role === 'Admin'){
             const branches = await Branch.find();
             if (!branches) return res.status(400).send({ message: 'Branch not found' });
             return res.status(200).send({ branches });
         } else if(findUser.role === 'Owner'){
             // *This is a owner user, just return branch of the company associate it
-            //The branches are associate with company atribute
-            const dataCompany = await findUser.company.populate('branches');
-            if (!dataCompany) return res.status(400).send({ message: 'Branch not found' });
+            //Check if the user is the owner of the company
+            const companyUser = findUser.company;
+            //Check if the current user match with the owner user of company
+            if (user._id.toString() !== companyUser.ownerUser.toString()) return res.status(400).send({ message: 'User is not the owner' });
+            //Find the company
+            const dataCompany = await Company.findById(companyUser._id).populate('branches');
+            if (!dataCompany) return res.status(400).send({ message: 'Company not found' });
             return res.status(200).send({ branches: dataCompany.branches});
         } else if(findUser.role === 'Regular'){
             //*This endpoint need to return the branches associate with the user 
@@ -42,10 +45,7 @@ export const getBranch = async (req, res) => {
 export const registerBranch = async (req, res) => {
     try {
         const {name, company, description, address, email, manager} = req.body;
-        //We need to check if the departament exist
-        const findDepartament = await Departament.findById(departament);
-        if (!findDepartament) return res.status(400).send({ message: 'Departament not found ' });
-
+        
         const branch = new Branch({
             _id: new Types.ObjectId(),
             name,

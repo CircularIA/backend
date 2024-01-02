@@ -3,7 +3,9 @@ import jwt from 'jsonwebtoken';
 
 export default function checkRole (roles) {
     return function (req, res, next) {
-        const token = req.cookies.token;
+        //Recibir el token a traves de los headers
+        const authHeader = req.header('Authorization');
+        const token = authHeader && authHeader.split(' ')[1];
         if (!token) return res.status(401).send('Access Denied');
         try {
             const verified = jwt.verify(token, process.env.JWT_KEY);

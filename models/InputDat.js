@@ -25,6 +25,7 @@ const InputdatSchema = new Schema({
     user: {
         name: {type: String},
         email: {type: String},
+        role: {type: String},
     },
 }, {timestamps: true})
 

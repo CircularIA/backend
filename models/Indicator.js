@@ -21,7 +21,7 @@ const IndicatorsSchema = new Schema({
         value: { type: Number },
         measurement: { type: String },
     }]  
-})
+}, {timestamps: true})
 
 const Indicator = model('Indicators', IndicatorsSchema);
 
