@@ -11,23 +11,22 @@ export const getCompany = async (req, res) => {
         const {user} = req;
         const findUser = await User.findById(user._id).populate('company');
         if (!findUser) return res.status(400).send({ message: 'User not found' });
-        const findCompany = await Company.findById(findUser.company._id).populate('branches').populate('departaments');
-        if (!findCompany) return res.status(400).send({ message: 'Company not found' });
-        // *if user is type 0, return whole branch
-        if (findUser.type === 0){
-            const companies = await Company.find({}).populate('branches').populate('departaments');
+        
+        // *if user is type Admin, return whole branch
+        if (findUser.role === 'Admin'){
+            const companies = await Company.find({}).populate('branches')
             if (!companies) return res.status(400).send({ message: 'Companies not found' });
             return res.status(200).send({ companies });
-        } else if(findUser.type === 1){
+        } else if(findUser.role === 'Owner'){
+            const findCompany = await Company.findById(findUser.company._id).populate('branches');
+            if (!findCompany) return res.status(400).send({ message: 'Company not found' });
             // *This user is a owner user, just return branch of the company associate it
-            const dataCompany = await Company.findById(findUser.company._id).populate('branches').populate('departaments');
+            const dataCompany = await Company.findById(findUser.company._id).populate('branches');
             if (!dataCompany) return res.status(400).send({ message: 'Company not found' });
             return res.status(200).send({ companies: dataCompany });
         } else{
             // *This user just have access to branch asigned to a departament
-            const departament = await Departament.findById(findUser.departament._id).populate('assignedBranches');
-            if (!companies) return res.status(400).send({ message: 'Company not found' });
-            return res.status(200).send({ companies: departament.assignedBranches });
+            
         }
     } catch (error) {
         console.log("error", error)
