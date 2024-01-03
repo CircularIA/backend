@@ -1,7 +1,6 @@
 import { Schema, model } from "mongoose";
+import Joi from 'joi-oid';
 
-import Joi from 'joi';
-import joiObjectId from 'joi-objectid';
 
 const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
@@ -40,9 +39,9 @@ InputdatSchema.statics.validateInputDat = async function (id) {
         value: Joi.number().required().label('Value').messages({'number.empty': 'Value is required'}),
         date: Joi.date().label('Date'),
         measurement: Joi.string().label('Measurement'),
-        indicator: JoiWithObjectId.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
-        company: JoiWithObjectId.string().required().label('Company').messages({'string.empty': 'Company is required'}),
-        branch: JoiWithObjectId.string().required().label('Branch').messages({'string.empty': 'Branch is required'}),
+        indicator: Joi.objectId().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+        company: Joi.objectId().required().label('Company'),
+        branch: Joi.objectId().required().label('Branch'),
         user: Joi.object({
             name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
             email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
