@@ -35,13 +35,13 @@ app.use(express.json());
 app.use(cors(corsOptions));
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/company', companyRoutes);
-app.use('/api/branch', branchRoutes);
+app.use('/user', userRoutes);
+app.use('/auth', authRoutes);
+app.use('/company', companyRoutes);
+app.use('/branch', branchRoutes);
 // app.use('/api/mail', mailRoutes);
-app.use('/api/indicator', indicatorRoutes);
-app.use('/api/inputDat', inputDatRoutes);
+app.use('/indicator', indicatorRoutes);
+app.use('/inputDat', inputDatRoutes);
 
 // Connect to database
 connectDB();

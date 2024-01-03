@@ -21,10 +21,12 @@ export const getUser = async (req, res) => {
 //This is to create a user in the database with form register
 export const createAdminUser = async (req, res) => {
     try {
-        console.log(req.body);
-        await User.validate(req.body);
+        await User.validateAdmin(req.body);
         //Get the data
-        const { username, email, password, company, role } = req.body;
+        const { username, email, password, secretKey} = req.body;
+        console.log (secretKey)
+        console.log(process.env.JWT_KEY)
+        if (secretKey != process.env.JWT_KEY) return res.status(400).send({ message: 'Secret key is not valid' });
         //Create a new user
         const salt = await bcrypt.genSalt(Number(process.env.SALT));
         const hashedPassword = await bcrypt.hash(req.body.password, salt);
@@ -33,13 +35,11 @@ export const createAdminUser = async (req, res) => {
             username,
             email,
             password: hashedPassword,
-            company,
             role: 'Admin',
         });
         if (!result) res.status(400).send({ message: 'User not saved' });
         res.status(201).send('User created');
     } catch (error) {
-        console.log("error", error)
         if (error.name === 'ValidationError') return res.status(400).send(error.message);
         res.status(500).send({ message: 'Internal Server Error', error: error.message });
     }
@@ -48,14 +48,17 @@ export const createAdminUser = async (req, res) => {
 export const createOwnerUser = async (req, res) => {
     try {
         //Validate
-        await User.validate(req.body);
+        await User.validateOwner(req.body);
         //Obtain the data
-        const { username, email, password, company, role} = req.body;
+        const { username, email, password, company} = req.body;
         //Have to create a new user
         const salt = await bcrypt.genSalt(Number(process.env.SALT));
         const hashedPassword = await bcrypt.hash(password, salt);
         //Obtain the company id
-        const companyDats = await Company.findById(company);
+        const companyDats = await Company.findById(company).populate('branches');
+        //If the company is not found, throw an error
+        if (!companyDats) return res.status(400).send({ message: 'Company not found' });
+        console.log(companyDats)
         //Owner user can access to whole company data
         const newUser = new User({
             _id: new Types.ObjectId(),

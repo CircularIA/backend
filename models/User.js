@@ -31,7 +31,6 @@ const userSchema = new Schema({
     company: {
         type: Schema.Types.ObjectId,
         ref: 'Company',
-        required: [true, 'Company is required'],
     },
     //Type of user
     //Admin
@@ -92,13 +91,21 @@ userSchema.methods.generatePasswordReset = function(){
 }
 
 //Static method to validate the user data
-userSchema.statics.validate = async function(data){
+//Admin
+userSchema.statics.validateAdmin = async function(data){
+    const Schema = Joi.object({
+        username: Joi.string().required().label('Username').messages({'string.empty': 'Username is required'}),
+        email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
+        password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
+    })
+}
+
+userSchema.statics.validateOwner = async function(data){
     const Schema = Joi.object({
         username: Joi.string().required().label('Username').messages({'string.empty': 'Username is required'}),
         email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
         password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
         company: Joi.string().required().label('Company').messages({'string.empty': 'Company is required'}),
-        role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
     });
     return Schema.validateAsync(data);
 }
@@ -109,7 +116,6 @@ userSchema.statics.validateRegularUser = async function(data){
         email: Joi.string().required().email().label('Email').messages({'string.empty': 'Email is required'}),
         password: Joi.string().required().label('Password').messages({'string.empty': 'Password is required'}),
         company: Joi.string().required().label('Company').messages({'string.empty': 'Company is required'}),
-        role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
         indicators: Joi.array().label('Indicators').messages({'string.empty': 'Indicators is required'}),
         branches: Joi.array().label('Branches').messages({'string.empty': 'Branches is required'}),
     });

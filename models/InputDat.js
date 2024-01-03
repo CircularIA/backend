@@ -1,5 +1,7 @@
 import { Schema, model } from "mongoose";
 
+import Joi from 'joi';
+
 const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
     //Codigo que permitira identificar cada dato de entrada
@@ -43,6 +45,36 @@ InputdatSchema.pre('save', async function (next) {
         }
     }
 });
+//Methods of validate
+InputdatSchema.statics.validateInputDat = async function (id) {
+    const Schema = Joi.object({
+        name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+        value: Joi.number().required().label('Value').messages({'number.empty': 'Value is required'}),
+        date: Joi.date().label('Date'),
+        measurement: Joi.string().label('Measurement'),
+        indicator: Joi.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+        company: Joi.string().required().label('Company'),
+        branch: Joi.string().required().label('Branch'),
+        user: Joi.required().object({
+            name: Joi.string().label('User name'),
+            email: Joi.string().label('User email'),
+            role: Joi.string().label('User role'),
+        }),
+    })
+    return Schema.validate(id);
+}
+
+//Method to validate the code in register indicator
+InputdatSchema.statics.validateFirstInputDat = async function (id) {
+    const Schema = Joi.object({
+        name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+        measurement: Joi.string().label('Measurement'),
+        indicator: Joi.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+    })
+    return Schema.validate(id);
+}
+
+
 
 const InputDat = model('InputDat', InputdatSchema);
 

@@ -1,5 +1,5 @@
 //Packages
-import { Types } from 'mongoose';
+import { Types, startSession } from 'mongoose';
 
 //Models
 import  Indicator  from '../models/Indicator.js';
@@ -173,57 +173,132 @@ export const getIndicatorValue = async (req, res) => {
 }
 
 export const registerIndicator = async (req, res) => {
+    //Validate the data
+    await Indicator.validateIndicators(req.body);
+    const { name, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
+    //Have to check if the indicator exist
+    const indicatorExist = await Indicator.findOne({ name });
+    if (indicatorExist) return res.status(400).send({ message: 'Indicator already exist' });
+    //Iniciar la transaccion de mongo
+    const session = await startSession();
+    //New id of the indicator
+    const indicatorId = new Types.ObjectId();
     try {
-        const { name, formula, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
-        //We need to check if the departament exist
-        console.log(req.body)
-        //Have to check if the indicator exist
-        const indicatorExist = await Indicator.findOne({ name });
-        if (indicatorExist) return res.status(400).send({ message: 'Indicator already exist' });
-        //!Input dats will have a unique code
-        //Input dats is a array of objects7
-        //Each object have a name and a measurement
-        //We have to check if the input data exist
-        // value, date, measurement, company , branch
-        console.log("inputDats", inputDats)
-        for (const input of inputDats) {
-            const { name, measurement } = input;
-            const inputDatExist = await InputDat.findOne({ name });
-            //If the input data exist we have to check if the measurement is the same
-            if (!inputDatExist) {
-                const newInputDat = new InputDat({
+        await session.withTransaction(async () => {
+            for (const input of inputDats) {
+                //Add the indicator id to the input dat
+                input.indicator = indicatorId;
+                //Validate the input dat
+                await InputDat.validateFirstInputDat(input);
+                const { name, measurement, indicator } = input;
+                InputDat.findOne({ name, indicator }).session(session).then(async (inputDatExist) => {
+                    console.log("inputDatExist", inputDatExist)
+                    //If the input data exist we have to check if the measurement is the same
+                    if (!inputDatExist) {
+                        const newInputDat = new InputDat({
+                            _id: new Types.ObjectId(),
+                            name,
+                            measurement,
+                            indicator
+                        })
+                        const result = await newInputDat.save({session});
+                        if (!result) return res.status(400).send({ message: 'Failed to register input data' });
+                        input.code = result.code;
+                    } else {
+                        if (inputDatExist.measurement !== measurement) {
+                            return res.status(400).send({ message: 'Input data already exist but the measurement is different' })
+                        }
+                        input.code = inputDatExist.code;
+                    }
+                }).catch(async (error) => {
+                    throw error;
+                })
+                //Register the indicator
+                const newIndicator = new Indicator({
                     _id: new Types.ObjectId(),
                     name,
+                    source,
+                    categorie,
+                    sourceType,
+                    description,
                     measurement,
-                })
-                const result = await newInputDat.save();
-                if (!result) return res.status(400).send({ message: 'Failed to register input data' });
-                input.code = result.code;
-            } else {
-                if (inputDatExist.measurement !== measurement) {
-                    return res.status(400).send({ message: 'Input data already exist but the measurement is different' })
-                }
-                input.code = inputDatExist.code;
+                    inputDats,
+                    factors,
+                });
+                const result = await newIndicator.save({session});
+                if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
+                return res.status(200).send({ message: 'Indicator registered' });
             }
-        }
-        console.log("inputDats", inputDats)
-        const newIndicator = new Indicator({
-            _id: new Types.ObjectId(),
-            name,
-            formula,
-            source,
-            categorie,
-            sourceType,
-            description,
-            measurement,
-            inputDats,
-            factors,
-        });
-        const result = await newIndicator.save();
-        if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
-        return res.status(200).send({ message: 'Indicator registered' });
+        })
     } catch (error) {
         console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    } finally {
+        session.endSession();
+    }
+    
+    // //!Input dats will have a unique code
+    // for (const input of inputDats) {
+    //     const { name, measurement } = input;
+    //     const inputDatExist = await InputDat.findOne({ name });
+    //     //If the input data exist we have to check if the measurement is the same
+    //     if (!inputDatExist) {
+    //         const newInputDat = new InputDat({
+    //             _id: new Types.ObjectId(),
+    //             name,
+    //             measurement,
+    //         })
+    //         const result = await newInputDat.save();
+    //         if (!result) return res.status(400).send({ message: 'Failed to register input data' });
+    //         input.code = result.code;
+    //     } else {
+    //         if (inputDatExist.measurement !== measurement) {
+    //             return res.status(400).send({ message: 'Input data already exist but the measurement is different' })
+    //         }
+    //         input.code = inputDatExist.code;
+    //     }
+    // }
+    // const newIndicator = new Indicator({
+    //     _id: new Types.ObjectId(),
+    //     name,
+    //     formula,
+    //     source,
+    //     categorie,
+    //     sourceType,
+    //     description,
+    //     measurement,
+    //     inputDats,
+    //     factors,
+    // });
+    // const result = await newIndicator.save();
+    // if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
+    // return res.status(200).send({ message: 'Indicator registered' });
+}
+
+export const updateIndicator = async (req, res) => {
+    try {
+        
+    } catch (error) {
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+//Asignar indicadores a una sucursal
+export const assignIndicator = async (req, res) => {
+    try {
+        //Obtener el id de la sucursal
+        const { branch, indicators } = req.body;
+        //Obtener la sucursal
+        const branchExist = await Branch.findById(branch);
+        if (!branchExist) return res.status(400).send({ message: 'Branch not found' });
+        //Obtener los indicadores
+        const indicatorsExist = await Indicator.find({ _id: { $in: indicators } });
+        if (!indicatorsExist) return res.status(400).send({ message: 'Indicators not found' });
+        //Asignar los indicadores a la sucursal
+        branchExist.indicators = indicators;
+        const result = await branchExist.save();
+        if (!result) return res.status(400).send({ message: 'Failed to assign indicators' });
+        return res.status(200).send({ message: 'Indicators assigned' });
+    } catch (error) {
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }

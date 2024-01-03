@@ -11,6 +11,6 @@ router.get('/', verifyToken, getCompany);
 router.post('/registerCompany', verifyToken, checkRole('Admin'), registerCompany);
 //Put Routes (update totally the resouce or create)
 //Patch Routes (update partially the resource)
-router.patch('/updateCompany/:id', updatecompany);
+router.patch('/updateCompany/:id', verifyToken, checkRole('Admin', 'Owner'), updatecompany);
 
 export default router;
