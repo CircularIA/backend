@@ -1,6 +1,7 @@
 import { Schema, model } from "mongoose";
 
 import Joi from 'joi';
+import joiObjectId from 'joi-objectid';
 
 const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
@@ -32,7 +33,6 @@ const InputdatSchema = new Schema({
     },
 }, {timestamps: true})
 
-
 //Methods of validate
 InputdatSchema.statics.validateInputDat = async function (id) {
     const Schema = Joi.object({
@@ -40,9 +40,9 @@ InputdatSchema.statics.validateInputDat = async function (id) {
         value: Joi.number().required().label('Value').messages({'number.empty': 'Value is required'}),
         date: Joi.date().label('Date'),
         measurement: Joi.string().label('Measurement'),
-        indicator: Joi.ObjectId().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
-        company: Joi.string().required().label('Company'),
-        branch: Joi.string().required().label('Branch'),
+        indicator: JoiWithObjectId.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+        company: JoiWithObjectId.string().required().label('Company').messages({'string.empty': 'Company is required'}),
+        branch: JoiWithObjectId.string().required().label('Branch').messages({'string.empty': 'Branch is required'}),
         user: Joi.object({
             name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
             email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),

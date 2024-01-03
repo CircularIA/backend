@@ -7,7 +7,7 @@ import checkRole from '../middlewares/role-authorize.js';
 import { getIndicators, getIndicatorValue,  registerIndicator, assignIndicator } from '../controllers/indicator.js';
 
 //Get routes
-router.get('/', verifyToken, getIndicators);
+router.get('/:branch', verifyToken, getIndicators);
 router.get('/values/:branch/:indicator/:year/:month?', verifyToken, getIndicatorValue);
 //Post routes
 router.post('/register', verifyToken, checkRole('Admin', 'Owner'), registerIndicator);

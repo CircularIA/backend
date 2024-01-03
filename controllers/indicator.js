@@ -74,9 +74,11 @@ const monthNumberToName = (monthNumber) => {
 export const getIndicators = async (req, res) => {
     try {
         //Se obtendra todos los indicadores
-        const indicators = await Indicator.find();
-        if (!indicators) return res.status(400).send({ message: 'Indicators not found' });
-        return res.status(200).send({ indicators });
+        const {branch} = req.params;
+        const branchIndicators = await Branch.findById(branch).populate('indicators.indicator');
+        if (!branchIndicators) return res.status(400).send({ message: 'Indicators not found' });
+        console.log("branchIndicators", branchIndicators)
+        return res.status(200).send({ branchIndicators });
     } catch (error) {
         console.log("error", error)
         res.status(500).send({ message: 'Internal Server Error' });
