@@ -13,7 +13,6 @@ const IndicatorsSchema = new Schema({
     measurement: { type: String }, //Unidad de medida del indicador
     inputDats: [{
         name: { type: String },
-        code: {type: Number},
         measurement: { type: String },
     }],
     //Valores constantes que se utilizan en la formula

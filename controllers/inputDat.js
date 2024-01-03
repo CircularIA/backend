@@ -4,6 +4,7 @@ import { Types, startSession } from 'mongoose';
 import  InputDat  from '../models/InputDat.js';
 import  Branch  from '../models/Branch.js';
 import  Indicator  from '../models/Indicator.js';
+import User  from '../models/User.js';
 
 export const getInputDats = async (req, res) => {
     try {
@@ -183,6 +184,9 @@ export const registerInputDatsMany = async (req, res) => {
     const currentIndicator = await Indicator.findOne({ _id: indicator });
     if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
     
+    //Obtener usuario
+    const user = await User.findOne({ _id: req.user._id });
+    if (!user) return res.status(400).send({ message: 'User not found' });
     //Iniciar la transacción de mongo
     const session = await startSession();
     
@@ -195,6 +199,16 @@ export const registerInputDatsMany = async (req, res) => {
             }
             //Crear los input dats
             for (const inputDat of inputDats) {
+                inputDat.indicator = indicator;
+                inputDat.company = currentBranch.company;
+                inputDat.branch = branch;
+                inputDat.user = {
+                    name: user.username,
+                    email: user.email,
+                    role: user.role,
+                }
+                //Validate the input dat values using schema validator of mongoose
+                await InputDat.validateInputDat(inputDat);
                 const { name, value, date, measurement } = inputDat;
 
                 const existingInputDats = await InputDat.findOne({ name, branch, indicator }).session(session);
@@ -206,14 +220,7 @@ export const registerInputDatsMany = async (req, res) => {
 
                 const newInputDat = new InputDat({
                     _id: new Types.ObjectId(),
-                    name,
-                    code: existingInputDats ? existingInputDats.code : undefined,
-                    value,
-                    date,
-                    measurement,
-                    indicator,
-                    company: currentBranch.company,
-                    branch,
+                    ...inputDat,
                 })
                 await newInputDat.save({session});
             }

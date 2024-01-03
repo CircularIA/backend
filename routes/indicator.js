@@ -12,7 +12,7 @@ router.get('/values/:branch/:indicator/:year/:month?', verifyToken, getIndicator
 //Post routes
 router.post('/register', verifyToken, checkRole('Admin', 'Owner'), registerIndicator);
 //Patch routes
-router.patch('/assign/:branch/:indicator', verifyToken, checkRole('Admin', 'Owner'), assignIndicator);
+router.patch('/assign', verifyToken, checkRole('Admin', 'Owner'), assignIndicator);
 //router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', getInputDatsByIndicator);
 
 export default router;

@@ -22,14 +22,31 @@ const branchSchema = new Schema({
     },
     //Indicadores de la sucursal
     indicators: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Indicators',
+        indicator: {
+            type: Schema.Types.ObjectId,
+            ref: 'Indicator',
+        },
         sourceType: [{
             type: String
         }],
+        //Datos de entrada se pueden activar o desactivar segun sucursal
+        inputDats : [{
+            name: { type: String },
+            measurement: { type: String },
+            active: { type: Boolean, default: true },
+            activeRegisters: [{
+                date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
+                active: { type: Boolean, default: true }, //Valor de activacion
+                user: { //Usuario que activo el indicador
+                    name: { type: String },
+                    email: { type: String },
+                    role: { type: String },
+                }
+            }],
+        }],
         active: { type: Boolean, default: true },
         activeRegisters: [{
-            date: { type: Date }, //Fecha de activacion (año, mes, dia)
+            date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
             active: { type: Boolean, default: true }, //Valor de activacion
             user: { //Usuario que activo el indicador
                 name: { type: String },
@@ -40,7 +57,7 @@ const branchSchema = new Schema({
         ],
     }],
     //Users assigned to the branch
-    asignedUsers: [{
+    assignedUsers: [{
         type: Schema.Types.ObjectId,
         ref: 'User',
     }],

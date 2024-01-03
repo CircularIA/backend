@@ -58,7 +58,7 @@ const userSchema = new Schema({
         }],
         active: { type: Boolean, default: true },
         activeRegisters: [{
-            date: { type: Date }, //Fecha de activacion (año, mes, dia)
+            date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
             value: { type: Boolean, default: true }, //Valor de activacion
             user: { //Usuario que brindo el acceso al usuario
                 name: { type: String },

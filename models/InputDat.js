@@ -4,11 +4,10 @@ import Joi from 'joi';
 
 const InputdatSchema = new Schema({
     _id: Schema.Types.ObjectId,
-    //Codigo que permitira identificar cada dato de entrada
-    code: {type: Number},
+    //Name of the input data
     name: {type: String, required: [true, 'Name is required']},
     value: {type: Number, required: [true, 'Value is required']},
-    date: {type: Date, default: Date.now},
+    date: {type: Date, default: new Date()},
     measurement: {type: String},
     indicator: {
         type: Schema.Types.ObjectId,
@@ -18,33 +17,22 @@ const InputdatSchema = new Schema({
     company: {
         type: Schema.Types.ObjectId,
         ref: 'Company',
+        required: [true, 'Company is required'],
     },
     branch: {
         type: Schema.Types.ObjectId,
         ref: 'Branch',
+        required: [true, 'Branch is required'],
     },
-    //Usuario que registro el dato de entrada
+    //User that register the input data and is required
     user: {
-        name: {type: String},
-        email: {type: String},
-        role: {type: String},
+        name: {type: String, required: [true, 'User name is required']},
+        email: {type: String, required: [true, 'User email is required']},
+        role: {type: String, required: [true, 'User role is required']},
     },
 }, {timestamps: true})
 
-//Middleware to generate the code before saving
-InputdatSchema.pre('save', async function (next) {
-    if (!this.code) {
-        //Generate a unique code
-        const lastInputDat = await InputDat.findOne().sort({field: 'asc', _id: -1}).limit(1);
-        if (lastInputDat) {
-            const lastcode = parseInt(lastInputDat.code, 10);
-            this.code = (lastcode + 1).toString();
-            next();
-        } else {
-            this.code = '1';
-        }
-    }
-});
+
 //Methods of validate
 InputdatSchema.statics.validateInputDat = async function (id) {
     const Schema = Joi.object({
@@ -52,16 +40,17 @@ InputdatSchema.statics.validateInputDat = async function (id) {
         value: Joi.number().required().label('Value').messages({'number.empty': 'Value is required'}),
         date: Joi.date().label('Date'),
         measurement: Joi.string().label('Measurement'),
-        indicator: Joi.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+        indicator: Joi.ObjectId().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
         company: Joi.string().required().label('Company'),
         branch: Joi.string().required().label('Branch'),
-        user: Joi.required().object({
-            name: Joi.string().label('User name'),
-            email: Joi.string().label('User email'),
-            role: Joi.string().label('User role'),
-        }),
+        user: Joi.object({
+            name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+            email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
+            role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
+        }).label('User').required().messages({'object.empty': 'User is required'
+        })
     })
-    return Schema.validate(id);
+    return Schema.validateAsync(id);
 }
 
 //Method to validate the code in register indicator
@@ -69,9 +58,8 @@ InputdatSchema.statics.validateFirstInputDat = async function (id) {
     const Schema = Joi.object({
         name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
         measurement: Joi.string().label('Measurement'),
-        indicator: Joi.string().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
     })
-    return Schema.validate(id);
+    return Schema.validateAsync(id);
 }
 
 

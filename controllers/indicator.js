@@ -5,22 +5,11 @@ import { Types, startSession } from 'mongoose';
 import  Indicator  from '../models/Indicator.js';
 import  Branch  from '../models/Branch.js';
 import  InputDat  from '../models/InputDat.js';
+import User  from '../models/User.js';
 
-export const getIndicators = async (req, res) => {
-    try {
-        //Se obtendra todos los indicadores
-        const indicators = await Indicator.find();
-        if (!indicators) return res.status(400).send({ message: 'Indicators not found' });
-        return res.status(200).send({ indicators });
-    } catch (error) {
-        console.log("error", error)
-        res.status(500).send({ message: 'Internal Server Error' });
-    }
-}
-
-export const getValue = (name, inputDatsValues) => {
+//Functions
+const getValue = (name, inputDatsValues) => {
     //El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
-    console.log("nombre indicador ", name)
     if (name === 'porcentaje de valorizacion ciclo biologico') {
         let factorValue = 0
         //Buscar en la variable inputDatsValues el valor del dato de entrada
@@ -79,9 +68,23 @@ const monthNumberToName = (monthNumber) => {
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
     return monthNames[monthNumber];
 }
+
+//Routes
+
+export const getIndicators = async (req, res) => {
+    try {
+        //Se obtendra todos los indicadores
+        const indicators = await Indicator.find();
+        if (!indicators) return res.status(400).send({ message: 'Indicators not found' });
+        return res.status(200).send({ indicators });
+    } catch (error) {
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+}
+
 export const getIndicatorValue = async (req, res) => {
     try {
-        console.log("entrada", req.body)
         //Se obtendra todos los indicadores
         const branch = req.params.branch;
         const indicator = req.params.indicator;
@@ -122,8 +125,6 @@ export const getIndicatorValue = async (req, res) => {
                         }
                     }
                 ])
-                console.log("inputDatValues", inputDatValues)
-                console.log("Del mes ", monthName, "se obtuvo ", inputDatValues.length, " valores")
                 //Si no se encuentran valores, se retorna el valor por defecto
                 if (inputDatValues.length === 0) {
                     monthValues.push(monthValue);
@@ -174,105 +175,37 @@ export const getIndicatorValue = async (req, res) => {
 
 export const registerIndicator = async (req, res) => {
     //Validate the data
-    await Indicator.validateIndicators(req.body);
-    const { name, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
-    //Have to check if the indicator exist
-    const indicatorExist = await Indicator.findOne({ name });
-    if (indicatorExist) return res.status(400).send({ message: 'Indicator already exist' });
-    //Iniciar la transaccion de mongo
-    const session = await startSession();
-    //New id of the indicator
-    const indicatorId = new Types.ObjectId();
     try {
-        await session.withTransaction(async () => {
-            for (const input of inputDats) {
-                //Add the indicator id to the input dat
-                input.indicator = indicatorId;
-                //Validate the input dat
-                await InputDat.validateFirstInputDat(input);
-                const { name, measurement, indicator } = input;
-                InputDat.findOne({ name, indicator }).session(session).then(async (inputDatExist) => {
-                    console.log("inputDatExist", inputDatExist)
-                    //If the input data exist we have to check if the measurement is the same
-                    if (!inputDatExist) {
-                        const newInputDat = new InputDat({
-                            _id: new Types.ObjectId(),
-                            name,
-                            measurement,
-                            indicator
-                        })
-                        const result = await newInputDat.save({session});
-                        if (!result) return res.status(400).send({ message: 'Failed to register input data' });
-                        input.code = result.code;
-                    } else {
-                        if (inputDatExist.measurement !== measurement) {
-                            return res.status(400).send({ message: 'Input data already exist but the measurement is different' })
-                        }
-                        input.code = inputDatExist.code;
-                    }
-                }).catch(async (error) => {
-                    throw error;
-                })
-                //Register the indicator
-                const newIndicator = new Indicator({
-                    _id: new Types.ObjectId(),
-                    name,
-                    source,
-                    categorie,
-                    sourceType,
-                    description,
-                    measurement,
-                    inputDats,
-                    factors,
-                });
-                const result = await newIndicator.save({session});
-                if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
-                return res.status(200).send({ message: 'Indicator registered' });
-            }
-        })
+        await Indicator.validateIndicators(req.body);
+        const { name, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
+        //Have to check if the indicator exist
+        const indicatorExist = await Indicator.findOne({ name });
+        if (indicatorExist) return res.status(400).send({ message: 'Indicator already exist' });
+        //*Como ya no se ocupara code, no se necesita guardar los datos de entrada
+        //*Por lo que no es necesario ser una operacion atomica
+        //?Solamente guardar el dato en el indicador
+        //Verificar si tiene la estructura requerida
+        for (const inputDat of inputDats) {
+            await InputDat.validateFirstInputDat(inputDat);
+        }
+        const newIndicator = new Indicator({
+            _id: new Types.ObjectId(),
+            name,
+            source,
+            categorie,
+            sourceType,
+            description,
+            measurement,
+            inputDats,
+            factors,
+        });
+        const result = await newIndicator.save();
+        if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
+        return res.status(200).send({ message: 'Indicator registered' });
     } catch (error) {
         console.log("error", error)
         res.status(500).send({ message: 'Internal Server Error' });
-    } finally {
-        session.endSession();
     }
-    
-    // //!Input dats will have a unique code
-    // for (const input of inputDats) {
-    //     const { name, measurement } = input;
-    //     const inputDatExist = await InputDat.findOne({ name });
-    //     //If the input data exist we have to check if the measurement is the same
-    //     if (!inputDatExist) {
-    //         const newInputDat = new InputDat({
-    //             _id: new Types.ObjectId(),
-    //             name,
-    //             measurement,
-    //         })
-    //         const result = await newInputDat.save();
-    //         if (!result) return res.status(400).send({ message: 'Failed to register input data' });
-    //         input.code = result.code;
-    //     } else {
-    //         if (inputDatExist.measurement !== measurement) {
-    //             return res.status(400).send({ message: 'Input data already exist but the measurement is different' })
-    //         }
-    //         input.code = inputDatExist.code;
-    //     }
-    // }
-    // const newIndicator = new Indicator({
-    //     _id: new Types.ObjectId(),
-    //     name,
-    //     formula,
-    //     source,
-    //     categorie,
-    //     sourceType,
-    //     description,
-    //     measurement,
-    //     inputDats,
-    //     factors,
-    // });
-    // const result = await newIndicator.save();
-    // if (!result) return res.status(400).send({ message: 'Failed to register indicator' });
-    // return res.status(200).send({ message: 'Indicator registered' });
 }
 
 export const updateIndicator = async (req, res) => {
@@ -285,20 +218,60 @@ export const updateIndicator = async (req, res) => {
 //Asignar indicadores a una sucursal
 export const assignIndicator = async (req, res) => {
     try {
-        //Obtener el id de la sucursal
-        const { branch, indicators } = req.body;
+        //Obtener los valores de entrada
+        const { branch, indicator } = req.body;
         //Obtener la sucursal
-        const branchExist = await Branch.findById(branch);
+        const branchExist = await Branch.findById(branch).populate('indicators');
         if (!branchExist) return res.status(400).send({ message: 'Branch not found' });
         //Obtener los indicadores
-        const indicatorsExist = await Indicator.find({ _id: { $in: indicators } });
-        if (!indicatorsExist) return res.status(400).send({ message: 'Indicators not found' });
-        //Asignar los indicadores a la sucursal
-        branchExist.indicators = indicators;
-        const result = await branchExist.save();
-        if (!result) return res.status(400).send({ message: 'Failed to assign indicators' });
-        return res.status(200).send({ message: 'Indicators assigned' });
+        const indicatorExist = await Indicator.findById(indicator);
+        if (!indicatorExist) return res.status(400).send({ message: 'Indicator not found' });
+        //Obtener el usuario
+        const currentUser = await User.findById(req.user._id);
+        if (!currentUser) return res.status(400).send({ message: 'User not found' });
+        //!Verificar si el usuario tiene permiso para asignar indicadores a esta sucursal
+        //Verificar si el indicador ya esta asignado a la sucursal
+        const indicatorAssigned = branchExist.indicators.find((indicator) => indicator._id.toString() === indicatorExist._id.toString());
+        if (indicatorAssigned) return res.status(400).send({ message: 'Indicator already assigned' });
+        //Datos de entrada asignados
+        let assignedInputDats = [];
+        for (const inputDat of indicatorExist.inputDats) {
+            assignedInputDats.push({
+                name: inputDat.name,
+                measurement: inputDat.measurement,
+                active: true,
+                activeRegisters: [{
+                    date: new Date(),
+                    active: true,
+                    user: {
+                        name: currentUser.username,
+                        email: currentUser.email,
+                        role: currentUser.role,
+                    }
+                }],
+            })
+        }
+        const assignedIndicator = {
+            indicator: indicatorExist._id,
+            sourceType: [indicatorExist.sourceType],
+            inputDats: assignedInputDats,
+            active: true,
+            activeRegisters: [{
+                date: new Date(),
+                active: true,
+                user: {
+                    name: currentUser.username,
+                    email: currentUser.email,
+                    role: currentUser.role,
+                }
+            }],
+        }
+        branchExist.indicators.push(assignedIndicator);
+        //Save the branch
+        await branchExist.save();
+        res.status(200).send({ message: 'Indicators assigned' });
     } catch (error) {
-        res.status(500).send({ message: 'Internal Server Error' });
+        console.log("error", error)
+        res.status(500).send({ message: 'Internal Server Error', error: error });
     }
 }
