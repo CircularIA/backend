@@ -46,6 +46,6 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
     return Schema.validateAsync(id);
 }
 
-const Indicator = model('Indicators', IndicatorsSchema);
+const Indicator = model('Indicator', IndicatorsSchema);
 
 export default Indicator;

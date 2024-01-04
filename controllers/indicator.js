@@ -77,7 +77,6 @@ export const getIndicators = async (req, res) => {
         const {branch} = req.params;
         const branchIndicators = await Branch.findById(branch).populate('indicators.indicator');
         if (!branchIndicators) return res.status(400).send({ message: 'Indicators not found' });
-        console.log("branchIndicators", branchIndicators)
         return res.status(200).send({ branchIndicators });
     } catch (error) {
         console.log("error", error)
@@ -233,7 +232,7 @@ export const assignIndicator = async (req, res) => {
         if (!currentUser) return res.status(400).send({ message: 'User not found' });
         //!Verificar si el usuario tiene permiso para asignar indicadores a esta sucursal
         //Verificar si el indicador ya esta asignado a la sucursal
-        const indicatorAssigned = branchExist.indicators.find((indicator) => indicator._id.toString() === indicatorExist._id.toString());
+        const indicatorAssigned = branchExist.indicators.find((item) => item.indicator._id.toString() === indicatorExist._id.toString());
         if (indicatorAssigned) return res.status(400).send({ message: 'Indicator already assigned' });
         //Datos de entrada asignados
         let assignedInputDats = [];
@@ -255,7 +254,7 @@ export const assignIndicator = async (req, res) => {
         }
         const assignedIndicator = {
             indicator: indicatorExist._id,
-            sourceType: [indicatorExist.sourceType],
+            sourceType: indicatorExist.sourceType,
             inputDats: assignedInputDats,
             active: true,
             activeRegisters: [{

@@ -183,7 +183,13 @@ export const registerInputDatsMany = async (req, res) => {
     //Check if the indicator exist
     const currentIndicator = await Indicator.findOne({ _id: indicator });
     if (!currentIndicator) return res.status(400).send({ message: 'Indicator not found' });
-    
+    //Check if the indicator is assigned to the branch
+    const indicatorExist = currentBranch.indicators.find(
+        item => item.indicator.toString() === currentIndicator._id.toString()
+    );
+    if (!indicatorExist) return res.status(400).send({ message: 'Indicator not assigned to the branch' });
+    //Check if the indicator is active on the branch
+    if (!indicatorExist.active) return res.status(400).send({ message: 'Indicator is not active on the branch' });
     //Obtener usuario
     const user = await User.findOne({ _id: req.user._id });
     if (!user) return res.status(400).send({ message: 'User not found' });
@@ -259,6 +265,10 @@ export const updateInputDats = async (req, res) => {
     try {
         //El formato sera un arreglo de objetos
         const { inputDats } = req.body;
+        //User
+        const user = await User.findOne({ _id: req.user._id });
+        if (!user) return res.status(400).send({ message: 'User not found' });
+
         const promises = inputDats.map(async inputDat => {
             const { id, name, value, date, measurement } = inputDat;
             const currentInputDat = await InputDat.findOne({ _id: id });
@@ -268,6 +278,12 @@ export const updateInputDats = async (req, res) => {
             currentInputDat.value = value;
             currentInputDat.date = date;
             currentInputDat.measurement = measurement;
+            currentInputDat.user = {
+                name: user.username,
+                email: user.email,
+                role: user.role,
+            }
+            //Update the input dat
             const savedInputDat = await currentInputDat.save();
             if (!savedInputDat) return res.status(400).send({ message: 'Input data not saved' });
         });

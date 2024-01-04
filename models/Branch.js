@@ -26,9 +26,7 @@ const branchSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'Indicator',
         },
-        sourceType: [{
-            type: String
-        }],
+        sourceType: { type: String }, //Tipo de fuente (Residuos, Flujos, Emisiones)
         //Datos de entrada se pueden activar o desactivar segun sucursal
         inputDats : [{
             name: { type: String },

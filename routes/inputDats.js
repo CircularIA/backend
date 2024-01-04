@@ -12,7 +12,7 @@ router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', verifyToken, 
 router.post('/', verifyToken, registerInputDats);
 router.post('/many/:branch/:indicator', verifyToken, registerInputDatsMany);
 //Patch Routes
-router.patch('/update/:id', verifyToken, updateInputDat);
 router.patch('/update', verifyToken, updateInputDats);
+router.patch('/update/:id', verifyToken, updateInputDat);
 
 export default router;
