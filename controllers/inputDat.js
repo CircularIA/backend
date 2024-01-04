@@ -34,6 +34,15 @@ export const getInputDatsByIndicator = async (req, res) => {
         //const date = req.params.date || new Date().toISOString().split('T')[0];
         if (!indicator) return res.status(400).send({ message: 'Indicator is required' });
         if (!branch) return res.status(400).send({ message: 'Branch is required' });
+        //Check if the indicator is assigned to the branch
+        const currentBranch = await Branch.findById(branch);
+        if (!currentBranch) return res.status(400).send({ message: 'Branch not found' });
+        const indicatorExist = currentBranch.indicators.find(
+            item => item.indicator.toString() === currentIndicator._id.toString()
+        );
+        if (!indicatorExist) return res.status(400).send({ message: 'Indicator not assigned to the branch' });
+        //Check if the indicator is active on the branch
+        if (!indicatorExist.active) return res.status(400).send({ message: 'Indicator is not active on the branch' });
         // const dateSplitted = date.split('-');
         if (!year){
             //Obtener todos los datos historicos
