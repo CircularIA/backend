@@ -24,6 +24,7 @@ export const getInputDats = async (req, res) => {
 //Si se recibe el año, el mes y el dia, obtener todos los datos del dia
 export const getInputDatsByIndicator = async (req, res) => {
     try {
+        await InputDat.validateGetInputDatsByIndicator(req.params);
         //Obtener los input dats de un indicador en una fecha
         const branch = req.params.branch;
         const indicator = req.params.indicator;
@@ -34,6 +35,7 @@ export const getInputDatsByIndicator = async (req, res) => {
         //const date = req.params.date || new Date().toISOString().split('T')[0];
         if (!indicator) return res.status(400).send({ message: 'Indicator is required' });
         if (!branch) return res.status(400).send({ message: 'Branch is required' });
+        const currentIndicator = await Indicator.findById(indicator);
         //Check if the indicator is assigned to the branch
         const currentBranch = await Branch.findById(branch);
         if (!currentBranch) return res.status(400).send({ message: 'Branch not found' });
@@ -119,6 +121,7 @@ export const getInputDatsByIndicator = async (req, res) => {
         }
     } catch (error) {
         console.log("error", error)
+        if (error.isJoi) return res.status(400).send({ message: error.message });
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
@@ -279,27 +282,31 @@ export const updateInputDats = async (req, res) => {
         if (!user) return res.status(400).send({ message: 'User not found' });
 
         const promises = inputDats.map(async inputDat => {
-            const { id, name, value, date, measurement } = inputDat;
-            const currentInputDat = await InputDat.findOne({ _id: id });
-            if (!currentInputDat) return res.status(400).send({ message: 'Input data not found' });
-            if (currentInputDat.name !== name) return res.status(400).send({ message: 'Input data name can not be changed' });
-            currentInputDat.name = name;
-            currentInputDat.value = value;
-            currentInputDat.date = date;
-            currentInputDat.measurement = measurement;
-            currentInputDat.user = {
-                name: user.username,
-                email: user.email,
-                role: user.role,
-            }
-            //Update the input dat
-            const savedInputDat = await currentInputDat.save();
-            if (!savedInputDat) return res.status(400).send({ message: 'Input data not saved' });
+            //Validate the input dat values using schema validator of mongoose
+            await InputDat.validateInputDat(inputDat);
+            const {name, value, date, measurement } = inputDat;
+            //Define using findOneAndUpdate
+            const result = await InputDat.findOneAndUpdate({
+                name: name,
+            }, {
+                value,
+                date,
+                measurement,
+                user: {
+                    name: user.username,
+                    email: user.email,
+                    role: user.role,
+                }
+            }, {
+                new: true,
+            });
+            if (!result) throw new Error('Input data not found or not updated');
         });
         await Promise.all(promises);
         return res.status(200).send({ message: 'Input data updated' });
     } catch (error) {
         console.log("error", error)
-        res.status(500).send({ message: 'Internal Server Error' });
+        if (error.isJoi) return res.status(400).send({ message: error.message });
+        res.status(500).send({ message: 'Internal Server Error', error:error.message });
     }
 }

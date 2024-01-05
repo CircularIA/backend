@@ -115,32 +115,34 @@ export const registerBranch = async (req, res) => {
         return res.status(200).send({ branch: savedBranch, message: 'Branch saved' });
     } catch (error) {
         console.log("error", error)
-        if (error.name === 'ValidationError') return res.status(400).send({ message: error.message });
+        if (error.isJoi) return res.status(400).send({ message: error.message });
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
 
 export const updateBranch = async (req, res) => {
     try {
-        const {name, description, address, email, manager, process, departament } = req.body;
+        //Validate
+        await Branch.validateUpdateBranch(req.body);
+        //Obtain the data
+        const {name, description, address, phone, email, status, manager, assignedUsers} = req.body;
         const {id} = req.params;
-        //We need to check if the departament exist
-        const findDepartament = await Departament.findById({code:departament});
-        if (!findDepartament) return res.status(400).send({ message: 'Departament not found' });
 
         const branch = await Branch.findByIdAndUpdate(id, {
             name,
             description,
             address,
+            phone,
             email,
+            status,
             manager,
-            process,
-            departament,
+            assignedUsers
         });
         if (!branch) return res.status(400).send({ message: 'Branch not found' });
         return res.status(200).send({ branch });
     } catch (error) {
         console.log("error", error)
+        if (error.name === 'ValidationError') return res.status(400).send({ message: error.message });
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }

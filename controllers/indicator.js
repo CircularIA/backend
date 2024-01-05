@@ -86,6 +86,8 @@ export const getIndicators = async (req, res) => {
 
 export const getIndicatorValue = async (req, res) => {
     try {
+        //Validate the data
+        await Indicator.validateGetIndicatorValue(req.params);
         //Se obtendra todos los indicadores
         const branch = req.params.branch;
         const indicator = req.params.indicator;
@@ -170,6 +172,7 @@ export const getIndicatorValue = async (req, res) => {
         }
     } catch (error) {
         console.log("error", error)
+        if (error.isJoi) return res.status(400).send({ message: error.details[0].message });
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }
@@ -211,8 +214,26 @@ export const registerIndicator = async (req, res) => {
 
 export const updateIndicator = async (req, res) => {
     try {
-        
+        //Validate the data
+        await Indicator.validateUpdateIndicators(req.body);
+        const { name, source, categorie, sourceType, description, measurement, inputDats, factors } = req.body;
+        //Have to check if the indicator exist
+        const indicatorExist = await Indicator.findById(req.params.id);
+        if (!indicatorExist) return res.status(400).send({ message: 'Indicator not found' });
+        //Verificar si tiene la estructura requerida solo en caso si se recibe un dato de entrada
+        if (inputDats){
+            for (const inputDat of inputDats) {
+                await InputDat.validateFirstInputDat(inputDat);
+            }
+        }
+        const result = await Indicator.findByIdAndUpdate(req.params.id, {
+            ...req.body,
+        });
+        if (!result) return res.status(400).send({ message: 'Failed to update indicator' });
+        return res.status(200).send({ message: 'Indicator updated' });
     } catch (error) {
+        console.log("error", error)
+        if (error.isJoi) return res.status(400).send({ message: error.details[0].message });
         res.status(500).send({ message: 'Internal Server Error' });
     }
 }

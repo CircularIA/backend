@@ -17,8 +17,7 @@ const branchSchema = new Schema({
     },
     manager: {
         name: { type: String },
-        email: { type: String },
-        role: { type: String },
+        email: { type: String }
     },
     //Indicadores de la sucursal
     indicators: [{
@@ -81,6 +80,22 @@ branchSchema.statics.validateBranch = async function (id) {
     return Schema.validateAsync(id);
 }
 
+branchSchema.statics.validateUpdateBranch = async function (id) {
+    const Schema = Joi.object({
+        name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+        description: Joi.string().label('Description'),
+        address: Joi.string().required().label('Address'),
+        phone: Joi.string().label('Phone'),
+        email: Joi.string().email().label('Email'),
+        status: Joi.boolean().label('Status'),
+        manager: Joi.object({
+            name: Joi.string().label('Manager name'),
+            email: Joi.string().email().label('Manager email'),
+        }),
+        asignedUsers: Joi.array().items(Joi.string()).label('Asigned users'),
+    });
+    return Schema.validateAsync(id);
+}
 const Branch = model('Branch', branchSchema);
 
 export default Branch;

@@ -85,12 +85,18 @@ export const updatecompany = async (req,res) => {
             rut,
             name,
             email,
+            image,
             description,
             address,
             location,
             size,
             typeIndustry,
             employees,
+            environmentalPrioritys,
+            typeMachinerys,
+            proyectosECI,
+            indicators,
+            branches,
         } = req.body;
         //Obtain the id of the company
         const {id} = req.params;
@@ -98,17 +104,24 @@ export const updatecompany = async (req,res) => {
             rut,
             name,
             email,
+            image,
             description,
             address,
             location,
             size,
             typeIndustry,
             employees,
+            environmentalPrioritys,
+            typeMachinerys,
+            proyectosECI,
+            indicators,
+            branches,
         })
         if (!company) return res.status(400).send({ message: 'Company not found' });
         return res.status(200).send({ message: 'Company updated' });
     } catch (error) {
         console.log("error", error)
+        if (error.name === 'ValidationError') return res.status(400).send({ message: error.message });
         return res.status(500).send({ message: 'Internal Server Error', error: error.message });
     }
 }

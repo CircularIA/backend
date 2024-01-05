@@ -46,7 +46,7 @@ InputdatSchema.statics.validateInputDat = async function (id) {
             name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
             email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
             role: Joi.string().required().label('Role').messages({'string.empty': 'Role is required'}),
-        }).label('User').required().messages({'object.empty': 'User is required'
+        }).label('User').messages({'object.empty': 'User is required'
         })
     })
     return Schema.validateAsync(id);
@@ -61,6 +61,17 @@ InputdatSchema.statics.validateFirstInputDat = async function (id) {
     return Schema.validateAsync(id);
 }
 
+//Method of validate get input dats by indicator
+InputdatSchema.statics.validateGetInputDatsByIndicator = async function (id) {
+    const Schema = Joi.object({
+        branch: Joi.objectId().required().label('Branch').messages({'string.empty': 'Branch is required'}),
+        indicator: Joi.objectId().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
+        year: Joi.number().integer().min(1900).label('Year'),
+        month: Joi.number().integer().min(1).max(12).label('Month'),
+        day: Joi.number().integer().min(1).max(31).label('Day'),
+    })
+    return Schema.validateAsync(id);
+}
 
 
 const InputDat = model('InputDat', InputdatSchema);

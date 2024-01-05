@@ -11,6 +11,6 @@ router.get('/', verifyToken, getBranch);
 //Post Routes
 router.post('/registerBranch', verifyToken, checkRole('Admin', 'Owner'), registerBranch);
 //Put Routes
-router.put('/updateBranch', verifyToken, updateBranch);
+router.patch('/updateBranch/:id', verifyToken, checkRole('Admin', 'Owner'), updateBranch);
 
 export default router;

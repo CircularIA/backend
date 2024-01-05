@@ -1,5 +1,5 @@
 import { Schema, model } from 'mongoose';
-import Joi from 'joi';
+import Joi from 'joi-oid';
 
 const companySchema = new Schema({
     _id: Schema.Types.ObjectId,
@@ -7,6 +7,7 @@ const companySchema = new Schema({
     name: {type: String, required: true},
     email: {type: String, required: true, unique: true},
     image: {type: String},
+    description: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte
     address: {type: String, required: true},
@@ -21,9 +22,11 @@ const companySchema = new Schema({
         }
     },
     //Size of the company
-    size: {type: Number},
+    size: {
+        type: Number,
+        integer: true
+    },
     //Description of the company
-    description: {type: String},
     typeIndustry: {
         type: String,
         required: [true, 'Type Industry is required'],
@@ -77,15 +80,21 @@ companySchema.statics.validateCompany = async function (id) {
 //Method of validate update
 companySchema.statics.validateUpdateCompany = async function (id) {
     const Schema = Joi.object({
-        rut: Joi.string().label('Rut').messages({'string.empty': 'Rut is required'}),
-        name: Joi.string().label('Name').messages({'string.empty': 'Name is required'}),
-        email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
-        description: Joi.string().label('Description').messages({'string.empty': 'Description is required'}),
-        address: Joi.string().label('Address').messages({'string.empty': 'Address is required'}),
-        location: Joi.object().label('Location').messages({'string.empty': 'Location is required'}),
-        size: Joi.number().label('Size').messages({'string.empty': 'Size is required'}),
-        typeIndustry: Joi.string().label('Type Industry').messages({'string.empty': 'Type Industry is required'}),
-        employees: Joi.number().label('Employees').messages({'string.empty': 'Employees is required'}),
+        rut: Joi.string().min(8).max(10).label('Rut'),
+        name: Joi.string().label('Name'),
+        email: Joi.string().email().label('Email'),
+        image: Joi.string().label('Image'),
+        description: Joi.string().label('Description'),
+        address: Joi.string().label('Address'),
+        location: Joi.object().label('Location'),
+        size: Joi.number().integer().label('Size'),
+        typeIndustry: Joi.string().label('Type Industry'),
+        employees: Joi.number().integer().label('Employees'),
+        environmentalPrioritys: Joi.array().label('Environmental Prioritys'),
+        typeMachinerys: Joi.array().label('Type Machinerys'),
+        proyectosECI: Joi.array().label('Proyectos ECI'),
+        indicators: Joi.array().label('Indicators'),
+        branches: Joi.array().label('Branches'),
     });
     return Schema.validateAsync(id);
 }
