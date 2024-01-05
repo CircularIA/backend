@@ -57,6 +57,8 @@ export const forgetPassword = async (req, res) => {
         if (!CurrentUser) throw new Error('Email does not exist.');
         //Generar token
         const token = CurrentUser.generatePasswordReset();
+        const encodedToken = btoa(token)
+        console.log(encodedToken)
         
         //Configure the email stmtp
         const transporter = nodemailer.createTransport({
@@ -76,7 +78,7 @@ export const forgetPassword = async (req, res) => {
             subject: 'Reset Account Password Link',
             html: `
             <h2>Please click on the given link to reset your account password</h2>
-            <a href="${process.env.FRONTEND_URL}/reset-password/${token}" style="text-decoration:none;color:#fff;background-color:#0DFF6E;text-align:center;vertical-align:middle;display:inline-block;font-weight:500;font-size:large;line-height:1.125rem;border-top:12px solid #0DFF6E;border-bottom:12px solid #0DFF6E;border-right:30px solid #0DFF6E;border-left:30px solid #0DFF6E" target="_blank">
+            <a href="${process.env.FRONTEND_URL}/reset-password/${encodedToken}" style="text-decoration:none;color:#fff;background-color:#0DFF6E;text-align:center;vertical-align:middle;display:inline-block;font-weight:500;font-size:large;line-height:1.125rem;border-top:12px solid #0DFF6E;border-bottom:12px solid #0DFF6E;border-right:30px solid #0DFF6E;border-left:30px solid #0DFF6E" target="_blank">
                 <font color="#ffffff">Reset my password</font>
             </a>    
             `
