@@ -35,13 +35,11 @@ const InputdatSchema = new Schema({
 //Methods of validate
 InputdatSchema.statics.validateInputDat = async function (id) {
     const Schema = Joi.object({
+        id: Joi.objectId().required().label('Id').messages({'string.empty': 'Id is required'}),
         name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
         value: Joi.number().required().label('Value').messages({'number.empty': 'Value is required'}),
         date: Joi.date().label('Date'),
         measurement: Joi.string().label('Measurement'),
-        indicator: Joi.objectId().required().label('Indicator').messages({'string.empty': 'Indicator is required'}),
-        company: Joi.objectId().required().label('Company'),
-        branch: Joi.objectId().required().label('Branch'),
         user: Joi.object({
             name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
             email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
