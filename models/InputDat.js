@@ -46,6 +46,18 @@ InputdatSchema.statics.validateInputDat = async function (id) {
 			.label("Value")
 			.messages({ "number.empty": "Value is required" }),
 		date: Joi.date().label("Date"),
+		indicator: Joi.objectId()
+			.required()
+			.label("Indicator")
+			.messages({ "string.empty": "Indicator is required" }),
+		company: Joi.objectId()
+			.required()
+			.label("Company")
+			.messages({ "string.empty": "Company is required" }),
+		branch: Joi.objectId()
+			.required()
+			.label("Branch")
+			.messages({ "string.empty": "Branch is required" }),
 		measurement: Joi.string().label("Measurement"),
 		user: Joi.object({
 			name: Joi.string()
