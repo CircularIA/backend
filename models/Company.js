@@ -10,7 +10,9 @@ const companySchema = new Schema({
     description: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte
+    region: {type: String, required: true},
     address: {type: String, required: true},
+    phone : {type: String},
     location: {
         type:{
             type: String,
@@ -70,6 +72,8 @@ companySchema.statics.validateCompany = async function (id) {
         name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
         email: Joi.string().required().label('Email').messages({'string.empty': 'Email is required'}),
         address: Joi.string().required().label('Address').messages({'string.empty': 'Address is required'}),
+        region: Joi.string().required().label('Region').messages({'string.empty': 'Region is required'}),
+        phone: Joi.string().label('Phone').messages({'string.empty': 'Phone is required'}),
         location: Joi.object().label('Location').messages({'string.empty': 'Location is required'}),
         size: Joi.number().label('Size').messages({'string.empty': 'Size is required'}),
         typeIndustry: Joi.string().required().label('Type Industry').messages({'string.empty': 'Type Industry is required'}),
@@ -86,6 +90,8 @@ companySchema.statics.validateUpdateCompany = async function (id) {
         image: Joi.string().label('Image'),
         description: Joi.string().label('Description'),
         address: Joi.string().label('Address'),
+        region: Joi.string().label('Region'),
+        phone: Joi.string().label('Phone'),
         location: Joi.object().label('Location'),
         size: Joi.number().integer().label('Size'),
         typeIndustry: Joi.string().label('Type Industry'),

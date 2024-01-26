@@ -82,9 +82,9 @@ branchSchema.statics.validateBranch = async function (id) {
 
 branchSchema.statics.validateUpdateBranch = async function (id) {
     const Schema = Joi.object({
-        name: Joi.string().required().label('Name').messages({'string.empty': 'Name is required'}),
+        name: Joi.string().label('Name').messages({'string.empty': 'Name is required'}),
         description: Joi.string().label('Description'),
-        address: Joi.string().required().label('Address'),
+        address: Joi.string().label('Address'),
         phone: Joi.string().label('Phone'),
         email: Joi.string().email().label('Email'),
         status: Joi.boolean().label('Status'),
