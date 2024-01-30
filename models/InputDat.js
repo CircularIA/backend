@@ -79,6 +79,38 @@ InputdatSchema.statics.validateInputDat = async function (id) {
 	return Schema.validateAsync(id);
 };
 
+InputdatSchema.statics.validateUpdateInputDat = async function (id) {
+	const Schema = Joi.object({
+		name: Joi.string()
+			.required()
+			.label("Name")
+			.messages({ "string.empty": "Name is required" }),
+		value: Joi.number()
+			.required()
+			.label("Value")
+			.messages({ "number.empty": "Value is required" }),
+		date: Joi.date().label("Date"),
+		measurement: Joi.string().label("Measurement"),
+		user: Joi.object({
+			name: Joi.string()
+				.required()
+				.label("Name")
+				.messages({ "string.empty": "Name is required" }),
+			email: Joi.string()
+				.required()
+				.label("Email")
+				.messages({ "string.empty": "Email is required" }),
+			role: Joi.string()
+				.required()
+				.label("Role")
+				.messages({ "string.empty": "Role is required" }),
+		})
+			.label("User")
+			.messages({ "object.empty": "User is required" }),
+	});
+	return Schema.validateAsync(id);
+};
+
 //Method to validate the code in register indicator
 InputdatSchema.statics.validateFirstInputDat = async function (id) {
 	const Schema = Joi.object({

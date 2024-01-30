@@ -338,7 +338,7 @@ export const updateInputDats = async (req, res) => {
 
 		const promises = inputDats.map(async (inputDat) => {
 			//Validate the input dat values using schema validator of mongoose
-			await InputDat.validateInputDat(inputDat);
+			await InputDat.validateUpdateInputDat(inputDat);
 			const { id, name, value, date, measurement } = inputDat;
 			//Define using findOneAndUpdate
 			const result = await InputDat.findOneAndUpdate(
