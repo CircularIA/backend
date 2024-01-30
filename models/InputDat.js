@@ -81,6 +81,10 @@ InputdatSchema.statics.validateInputDat = async function (id) {
 
 InputdatSchema.statics.validateUpdateInputDat = async function (id) {
 	const Schema = Joi.object({
+		id: Joi.objectId()
+			.required()
+			.label("Id")
+			.messages({ "string.empty": "Id is required" }),
 		name: Joi.string()
 			.required()
 			.label("Name")
