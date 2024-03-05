@@ -4,16 +4,20 @@ import Joi from "joi-oid";
 const InputdatSchema = new Schema(
 	{
 		_id: Schema.Types.ObjectId,
+		//Index of equal inputs data
+		index: { type: Number, default: 0 },
 		//Name of the input data
 		name: { type: String, required: [true, "Name is required"] },
+		description: { type: String },
 		value: { type: Number, required: [true, "Value is required"] },
 		date: { type: Date, default: new Date() },
 		measurement: { type: String },
-		indicator: {
-			type: Schema.Types.ObjectId,
-			ref: "Indicator",
-			required: [true, "Indicator is required"],
-		},
+		norm: { type: String, required: true}, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+		categorie: { type: String, required: true, enum: [
+			"Ambiental",
+			"Social",
+			"Economica",
+		]}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
 		company: {
 			type: Schema.Types.ObjectId,
 			ref: "Company",
@@ -26,30 +30,47 @@ const InputdatSchema = new Schema(
 		},
 		//User that register the input data and is required
 		user: {
-			name: { type: String, required: [true, "User name is required"] },
+			username: { type: String, required: [true, "User name is required"] },
 			email: { type: String, required: [true, "User email is required"] },
 			role: { type: String, required: [true, "User role is required"] },
 		},
 	},
 	{ timestamps: true }
 );
+//Override pre save method to increment the index of the input data
+InputdatSchema.pre("save", async function (next) {
+	if (!this.isNew){
+		return next();
+	}
+	try {
+		const inputDat = this;
+		const lastInputDat = await InputDat.findOne({ company: inputDat.company }).sort({ index: -1 });
+		if (lastInputDat) {
+			inputDat.index = lastInputDat.index + 1;
+		}
+		next();
+	} catch (error) {
+		next(error)
+	}
+});
+
 
 //Methods of validate
-InputdatSchema.statics.validateInputDat = async function (id) {
+InputdatSchema.statics.validateNewInputDat = async function (id) {
 	const Schema = Joi.object({
 		name: Joi.string()
 			.required()
 			.label("Name")
 			.messages({ "string.empty": "Name is required" }),
+		description: Joi.string().label("Description"),
 		value: Joi.number()
 			.required()
 			.label("Value")
 			.messages({ "number.empty": "Value is required" }),
-		date: Joi.date().label("Date"),
-		indicator: Joi.objectId()
-			.required()
-			.label("Indicator")
-			.messages({ "string.empty": "Indicator is required" }),
+		date: Joi.date().required().label("Date"),
+		measurement: Joi.string().label("Measurement"),
+		norm: Joi.string().required().label("Norm"),
+		categorie: Joi.string().required().label("Categorie"),
 		company: Joi.objectId()
 			.required()
 			.label("Company")
@@ -58,9 +79,8 @@ InputdatSchema.statics.validateInputDat = async function (id) {
 			.required()
 			.label("Branch")
 			.messages({ "string.empty": "Branch is required" }),
-		measurement: Joi.string().label("Measurement"),
 		user: Joi.object({
-			name: Joi.string()
+			username: Joi.string()
 				.required()
 				.label("Name")
 				.messages({ "string.empty": "Name is required" }),

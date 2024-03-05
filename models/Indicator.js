@@ -7,11 +7,15 @@ const IndicatorsSchema = new Schema(
     name: { type: String, unique: true, required: true },
     source: { type: String, required: true }, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
     //Definir como requerida la categoria
-    categorie: { type: String, required: true }, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+    categorie: { type: String, required: true, enum: [
+      "Ambiental",
+      "Social",
+      "Economica",
+    ] }, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
     sourceType: {
       type: String,
       enum: [
-        "Valorización de residuos",
+        "Residuos",
         "Emisiones",
         "Energía",
         "Agua",

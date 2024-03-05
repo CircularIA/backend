@@ -21,46 +21,25 @@ const branchSchema = new Schema(
 			email: { type: String },
 		},
 		//Indicadores de la sucursal
-		indicators: [
+		inputDats: [
 			{
-				indicator: {
+				inputDat : {
 					type: Schema.Types.ObjectId,
-					ref: "Indicator",
+					ref: "InputDat",
 				},
-				sourceType: { type: String }, //Tipo de fuente (Residuos, Flujos, Emisiones)
-				//Datos de entrada se pueden activar o desactivar segun sucursal
-				inputDats: [
-					{
-						name: { type: String },
-						measurement: { type: String },
-						active: { type: Boolean, default: true },
-						activeRegisters: [
-							{
-								date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
-								active: { type: Boolean, default: true }, //Valor de activacion
-								user: {
-									//Usuario que activo el indicador
-									name: { type: String },
-									email: { type: String },
-									role: { type: String },
-								},
-							},
-						],
-					},
-				],
-				active: { type: Boolean, default: true },
-				activeRegisters: [
-					{
-						date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
-						active: { type: Boolean, default: true }, //Valor de activacion
-						user: {
-							//Usuario que activo el indicador
-							name: { type: String },
-							email: { type: String },
-							role: { type: String },
-						},
-					},
-				],
+				name: { type: String },
+				// activeRegisters: [
+				// 	{
+				// 		date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
+				// 		active: { type: Boolean, default: true }, //Valor de activacion
+				// 		user: {
+				// 			//Usuario que activo el indicador
+				// 			name: { type: String },
+				// 			email: { type: String },
+				// 			role: { type: String },
+				// 		},
+				// 	},
+				// ],
 			},
 		],
 		//Users assigned to the branch
@@ -93,7 +72,7 @@ branchSchema.statics.validateBranch = async function (id) {
 			name: Joi.string().label("Manager name"),
 			email: Joi.string().email().label("Manager email"),
 		}),
-		indicators: Joi.array().items(Joi.string()).label("Indicators"),
+		inputDats: Joi.array().items(Joi.string()).label("InputDats"),
 		asignedUsers: Joi.array().items(Joi.string()).label("Asigned users"),
 	});
 	return Schema.validateAsync(id);

@@ -8,48 +8,48 @@ import InputDat from "../models/InputDat.js";
 import User from "../models/User.js";
 
 //Functions
-const getValue = (name, inputDatsValues) => {
+const getValue = (name, inputDatsValues, factors) => {
 	//El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
 	if (name === "porcentaje de valorización ciclo biológico") {
-		let factorValue = 0;
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
 		const valores = {
-			entradaResiduosTotales: 0,
 			generacionLodos: 0,
 			valCompostaje: 0,
+			valMasa : 0,
 			valBiodigestion: 0,
 			valTratamientoRiles: 0,
+			entradaMunicipal: 0,
 			potencialValorizacion: 0,
 		};
 		inputDatsValues.forEach((inputDat) => {
-			console.log("inputDat", inputDat);
-			if (inputDat.name === "entrada residuos totales") {
-				valores["entradaResiduosTotales"] = inputDat.value;
-			} else if (inputDat.name === "generacion lodos") {
+			if (inputDat.name === "generación de lodo") {
 				valores["generacionLodos"] = inputDat.value;
-			} else if (inputDat.name === "val compostaje") {
+			} else if (inputDat.name === "valorización compostaje") {
 				valores["valCompostaje"] = inputDat.value;
-			} else if (inputDat.name === "val biodigestion") {
+			} else if (inputDat.name === "valorización masas") {
+				valores["valMasa"] = inputDat.value;
+			}
+			else if (inputDat.name === "valorización biodigestión") {
 				valores["valBiodigestion"] = inputDat.value;
-			} else if (inputDat.name === "val tratamiento riles") {
+			} else if (inputDat.name === "valorización planta de riles") {
 				valores["valTratamientoRiles"] = inputDat.value;
-			} else if (
-				inputDat.name === "potencial valorizacion ciclo biologico"
-			) {
-				valores["potencialValorizacion"] = inputDat.value;
+			} else if (inputDat.name === "entrada de residuos municipales"){
+				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
-		factorValue =
-			(valores["potencialValorizacion"] /
-				valores["entradaResiduosTotales"]) *
-			100;
+		console.log("factores", factors);
+		const factorValue = factors[0]["value"];
+		console.log("factorValue", factorValue);
+		const valorizado = (valores["generacionLodos"] + valores["valCompostaje"] + valores["valMasa"] + valores["valBiodigestion"] + valores["valTratamientoRiles"])
+		//Condicion si maneja entradas municipales o no
+		if (valores["entradaMunicipal"] > 0) {
+			valores["potencialValorizacion"] = valores["entradaMunicipal"] * factorValue + valorizado;
+		} else {
+			valores["potencialValorizacion"] = valorizado;
+		}
 		const valorizacionCicloBiologico =
-			((valores["valCompostaje"] +
-				valores["valBiodigestion"] +
-				valores["valTratamientoRiles"]) *
-				100) /
-			((valores["entradaResiduosTotales"] * factorValue) / 100);
-		return valorizacionCicloBiologico;
+			valorizado / valores["potencialValorizacion"];
+		return valorizacionCicloBiologico * 100;
 	} else if (name === "porcentaje de valorizacion ciclo tecnico") {
 		let factorValue = 0;
 		const valores = {
@@ -184,13 +184,13 @@ export const getIndicatorValue = async (req, res) => {
 					//Si se encuentran valores, se calcula el valor del indicador
 					const value = getValue(
 						currentIndicator.name,
-						inputDatValues
+						inputDatValues,
+						currentIndicator.factors
 					);
 					monthValue.value = value;
 					monthValues.push(monthValue);
 				}
 			}
-			console.log("mont values", monthValues);
 			return res.status(200).send({ monthValues });
 		} else {
 			month = parseInt(month);
@@ -216,7 +216,7 @@ export const getIndicatorValue = async (req, res) => {
 			if (inputDatsValues.length === 0) {
 				return res.status(200).send({ value: -1 });
 			} else {
-				const value = getValue(currentIndicator.name, inputDatsValues);
+				const value = getValue(currentIndicator.name, inputDatsValues, currentIndicator.factors);
 				return res.status(200).send({ value });
 			}
 		}

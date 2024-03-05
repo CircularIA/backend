@@ -5,6 +5,7 @@ import InputDat from "../models/InputDat.js";
 import Branch from "../models/Branch.js";
 import Indicator from "../models/Indicator.js";
 import User from "../models/User.js";
+import Company from "../models/Company.js";
 
 export const getInputDats = async (req, res) => {
 	try {
@@ -149,70 +150,33 @@ export const getInputDatsByIndicator = async (req, res) => {
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
-export const registerInputDats = async (req, res) => {
+export const registerInputDat = async (req, res) => {
 	try {
-		const { name, value, date, measurement, company, branch, indicator } =
+		const {index, name, description, value, date, measurement, norm, categorie} =
 			req.body;
-		//We need to check if the departament exist
-		if (!company)
-			return res.status(400).send({ message: "Company is required" });
-		if (!branch)
-			return res.status(400).send({ message: "Branch is required" });
-		if (!indicator)
-			return res.status(400).send({ message: "Indicator is required" });
-		const inputDat = new InputDat({
-			_id: new Types.ObjectId(),
-			name,
-			value,
-			date,
-			measurement,
-			indicator,
-			company,
-			branch,
-		});
-		//! Probar como funciona esta validacion
-		//Validate the input dat values using schema validator of mongoose
-		const validationError = inputDat.validateSync();
-		if (validationError)
-			return res.status(400).send({ message: validationError.message });
-		const inputDatExist = await InputDat.findOne({ name });
-		//If the input exits we have to check if the measurement is the same
-		if (inputDatExist) {
-			if (inputDatExist.measurement !== measurement) {
-				return res.status(400).send({
-					message:
-						"Input data already exist but the measurement is different",
-				});
-			}
-			//If the input dat exist, use the same code
-			inputDat.code = inputDatExist.code;
-		}
-		//Have to add the indicator to the branch
+		
+		const currentUser = req.user;
+		//Obtener el usuario
+		const user = await User.findOne({ _id: currentUser._id });
+		req.body.user = user;
+		//Obtain the indicator and the branch by params
+		const { company, branch} = req.params;
+		//Verify if the company and the branch exist
+		const currentCompany = await Company.findOne({ _id: company });
+		if (!currentCompany)
+			return res.status(400).send({ message: "Company not found" });
 		const currentBranch = await Branch.findOne({ _id: branch });
 		if (!currentBranch)
 			return res.status(400).send({ message: "Branch not found" });
-		//Check if the indicator exist
-		const currentIndicator = await Indicator.findOne({ _id: indicator });
-		if (!currentIndicator)
-			return res.status(400).send({ message: "Indicator not found" });
-		//Check if the indicator is already in the branch
-		const indicatorExist = currentBranch.indicators.find(
-			(indicator) =>
-				indicator.toString() === currentIndicator._id.toString()
-		);
-		//Add the indicator to the branch
-		if (!indicatorExist) {
-			currentBranch.indicators.push(currentIndicator._id);
-			const savedBranch = await currentBranch.save();
-			if (!savedBranch)
-				return res.status(400).send({ message: "Branch not saved" });
-		}
-		const savedInputDat = await inputDat.save();
-		if (!savedInputDat)
-			return res.status(400).send({ message: "Input data not saved" });
+		req.body.company = company;
+		req.body.branch = branch;
+
+		//Validate the input dat values using schema validator of mongoose
+		await InputDat.validateNewInputDat(req.body);
 		return res.status(200).send({ inputDat: savedInputDat });
 	} catch (error) {
 		console.log("error", error);
+		if (error.name === "ValidationError") return res.status(400).send({ message: error.message });
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
@@ -249,7 +213,6 @@ export const registerInputDatsMany = async (req, res) => {
 	if (!user) return res.status(400).send({ message: "User not found" });
 	//Iniciar la transacción de mongo
 	const session = await startSession();
-
 	try {
 		await session.withTransaction(async () => {
 			//Verificar si el indicador ya esta en la sucursal
