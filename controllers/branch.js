@@ -47,7 +47,7 @@ export const registerBranch = async (req, res) => {
     try {
         //Validate
         await Branch.validateBranch(req.body);
-        const {name, company, description, address, phone, email, manager, indicators, asignedUsers} = req.body;
+        const {name, company, description, address, phone, email, manager, assignedUsers} = req.body;
         //Get User
         const {user} = req;
         const currentUser = await User.findById(user._id);
@@ -61,34 +61,10 @@ export const registerBranch = async (req, res) => {
             findManager = await User.findById(manager);
             if (!findManager) return res.status(400).send({ message: 'Manager not found' });
         }
-        let currentIndicators = [];
-        //Check the Array of indicators if exist
-        if (indicators){
-            //We need to check if the indicators exist
-            for (const indicator of indicators) {
-                const findIndicator = await Indicator.findById(indicator);
-                if (!findIndicator) return res.status(400).send({ message: 'Indicator not found' });
-                currentIndicators.push({
-                    type: findIndicator._id,
-                    sourceType: findIndicator.sourceType,
-                    active: true,
-                    activeRegisters: [{
-                        date: new Date(),
-                        value: true,
-                        user: {
-                            name: currentUser.username,
-                            email: currentUser.email,
-                            role: currentUser.role,
-                        }
-                    }],
-                });
-            }
-        }
-        //Check the array of users if exist
-        let currentUsers = [];
-        if (asignedUsers){
+        let currentUsers = [user._id];
+        if (assignedUsers){
             //We need to check if the users exist
-            for (const user of asignedUsers) {
+            for (const user of assignedUsers) {
                 const findUser = await User.findById(user);
                 if (!findUser) return res.status(400).send({ message: 'User not found' });
                 currentUsers.push(findUser._id);
@@ -104,8 +80,8 @@ export const registerBranch = async (req, res) => {
             email,
             company,
             manager: findManager,
-            indicators: currentIndicators,
-            asignedUsers: currentUsers,
+            inputDats: [],
+            assignedUsers: currentUsers,
         });
         const savedBranch = await branch.save();
         if (!savedBranch) return res.status(400).send({ message: 'Branch not saved' });
@@ -147,4 +123,29 @@ export const updateBranch = async (req, res) => {
     }
 }
 
+export const deleteBranch = async (req, res) => {
+    const { id } = req.params; // Obtención de id por parámetro de la petición
+    try {
+        // Intenta encontrar y eliminar la sucursal
+        const deletedBranch = await Branch.findByIdAndRemove(id);
+
+        // Si no se encuentra la sucursal, devuelve un mensaje de error
+        if (!deletedBranch) {
+            return res.status(404).send({ message: 'Branch not found' });
+        }
+
+        // Encuentra la compañía y elimina la referencia a la sucursal
+        const company = await Company.findById(deletedBranch.company);
+        if (company) {
+            company.branches.pull(id); // 'pull' elimina el id de la sucursal del array de branches
+            await company.save();
+        }
+
+        // Si se elimina la sucursal, devuelve una confirmación
+        res.status(200).send({ message: 'Branch deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: 'Internal Server Error' });
+    }
+};
 
