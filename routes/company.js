@@ -8,6 +8,7 @@ import {
 	getCompany,
 	registerCompany,
 	updatecompany,
+	deleteCompany
 } from "../controllers/company.js";
 
 router.get("/", verifyToken, getCompany);
@@ -26,5 +27,6 @@ router.patch(
 	checkRole(["Admin", "Owner"]),
 	updatecompany
 );
+router.delete('/deleteCompany/:id', verifyToken, checkRole(['Admin']), deleteCompany);
 
 export default router;
