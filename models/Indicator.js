@@ -7,11 +7,13 @@ const IndicatorsSchema = new Schema(
     name: { type: String, unique: true, required: true },
     source: { type: String, required: true }, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
     //Definir como requerida la categoria
-    categorie: { type: String, required: true, enum: [
-      "Ambiental",
-      "Social",
-      "Economica",
-    ] }, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+    categorie: {
+      type: String, required: true, enum: [
+        "Ambiental",
+        "Social",
+        "Economica",
+      ]
+    }, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
     sourceType: {
       type: String,
       enum: [
@@ -28,6 +30,8 @@ const IndicatorsSchema = new Schema(
       {
         name: { type: String },
         measurement: { type: String },
+        description: { type: String },
+        norm: { type: String }
       },
     ],
     //Valores constantes que se utilizan en la formula
@@ -82,7 +86,7 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
     sourceType: Joi.string()
       .required()
       .valid(
-        "Valorización de residuos",
+        "Residuos",
         "Emisiones",
         "Energía",
         "Agua",
@@ -96,8 +100,10 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
       .required()
       .items(
         Joi.object({
-          name: Joi.string().label("Name"),
-          measurement: Joi.string().label("Measurement"),
+          name: Joi.string().required().label("Name"),
+          measurement: Joi.string().required().label("Measurement"),
+          description: Joi.string().label("Description").allow(""),
+          norm: Joi.string().label("Norm").allow("")
         })
       )
       .label("Input data"),

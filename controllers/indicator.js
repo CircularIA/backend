@@ -15,7 +15,7 @@ const getValue = (name, inputDatsValues, factors) => {
 		const valores = {
 			generacionLodos: 0,
 			valCompostaje: 0,
-			valMasa : 0,
+			valMasa: 0,
 			valBiodigestion: 0,
 			valTratamientoRiles: 0,
 			entradaMunicipal: 0,
@@ -33,7 +33,7 @@ const getValue = (name, inputDatsValues, factors) => {
 				valores["valBiodigestion"] = inputDat.value;
 			} else if (inputDat.name === "valorización planta de riles") {
 				valores["valTratamientoRiles"] = inputDat.value;
-			} else if (inputDat.name === "entrada de residuos municipales"){
+			} else if (inputDat.name === "entrada de residuos municipales") {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
@@ -101,26 +101,12 @@ const monthNumberToName = (monthNumber) => {
 
 export const getIndicators = async (req, res) => {
 	try {
-		//Si no hay branch devolver todos los indicators
-		if (!req.params.branch) {
-			const indicators = await Indicator.find();
-			if (!indicators)
-				return res
-					.status(400)
-					.send({ message: "Indicators not found" });
-			return res.status(200).send({ indicators });
-		} else {
-			//Se obtendra todos los indicadores
-			const { branch } = req.params;
-			const branchIndicators = await Branch.findById(branch).populate(
-				"indicators.indicator"
-			);
-			if (!branchIndicators)
-				return res
-					.status(400)
-					.send({ message: "Indicators not found" });
-			return res.status(200).send({ branchIndicators });
-		}
+		const indicators = await Indicator.find();
+		if (!indicators)
+			return res
+				.status(400)
+				.send({ message: "Indicators not found" });
+		return res.status(200).send({ indicators });
 	} catch (error) {
 		console.log("error", error);
 		res.status(500).send({ message: "Internal Server Error" });

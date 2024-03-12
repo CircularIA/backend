@@ -12,12 +12,14 @@ const InputdatSchema = new Schema(
 		value: { type: Number, required: [true, "Value is required"] },
 		date: { type: Date, default: new Date() },
 		measurement: { type: String },
-		norm: { type: String, required: true}, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-		categorie: { type: String, required: true, enum: [
-			"Ambiental",
-			"Social",
-			"Economica",
-		]}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+		norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+		categorie: {
+			type: String, required: true, enum: [
+				"Ambiental",
+				"Social",
+				"Economica",
+			]
+		}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
 		company: {
 			type: Schema.Types.ObjectId,
 			ref: "Company",
@@ -39,7 +41,7 @@ const InputdatSchema = new Schema(
 );
 //Override pre save method to increment the index of the input data
 InputdatSchema.pre("save", async function (next) {
-	if (!this.isNew){
+	if (!this.isNew) {
 		return next();
 	}
 	try {
@@ -143,6 +145,8 @@ InputdatSchema.statics.validateFirstInputDat = async function (id) {
 			.label("Name")
 			.messages({ "string.empty": "Name is required" }),
 		measurement: Joi.string().label("Measurement"),
+		description: Joi.string().label("Description").allow(""),
+		norm: Joi.string().label("Norm").allow("")
 	});
 	return Schema.validateAsync(id);
 };
