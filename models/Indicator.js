@@ -27,11 +27,17 @@ const IndicatorsSchema = new Schema(
     inputDats: [
       {
         name: { type: String },
+        description: { type: String },
         measurement: { type: String },
+        norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+        type: { type: String, enum: ["Subproductos", "Residuos"] },
+        categorie: { type: String, required: true, enum: [
+          "Ambiental",
+          "Social",
+          "Economica",
+        ]}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
       },
     ],
-    //Valores constantes que se utilizan en la formula
-    // !Este atributo varia segun procesos segun el excel
     factors: [
       {
         name: { type: String },

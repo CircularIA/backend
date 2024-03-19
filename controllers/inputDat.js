@@ -152,13 +152,15 @@ export const getInputDatsByIndicator = async (req, res) => {
 };
 export const registerInputDat = async (req, res) => {
 	try {
-		const {index, name, description, value, date, measurement, norm, categorie} =
-			req.body;
 		
 		const currentUser = req.user;
 		//Obtener el usuario
 		const user = await User.findOne({ _id: currentUser._id });
-		req.body.user = user;
+		req.body.user = {
+			username: user.username,
+			email: user.email,
+			role: user.role,
+		}
 		//Obtain the indicator and the branch by params
 		const { company, branch} = req.params;
 		//Verify if the company and the branch exist
@@ -170,9 +172,23 @@ export const registerInputDat = async (req, res) => {
 			return res.status(400).send({ message: "Branch not found" });
 		req.body.company = company;
 		req.body.branch = branch;
+		console.log("req body", req.body);
+		console.log("req user", req.body.user);
+		console.log("req user", req.body.user.$__);
 
 		//Validate the input dat values using schema validator of mongoose
 		await InputDat.validateNewInputDat(req.body);
+		//Post validation, create the input dat
+		const inputDat = new InputDat({
+			_id: new Types.ObjectId(),
+			...req.body,
+		});
+		console.log("inputDat", inputDat);
+		const savedInputDat = await inputDat.save();
+		console.log("savedInputDat", savedInputDat);
+		if (!savedInputDat){
+			return res.status(400).send({ message: "Input data not saved" });
+		}
 		return res.status(200).send({ inputDat: savedInputDat });
 	} catch (error) {
 		console.log("error", error);

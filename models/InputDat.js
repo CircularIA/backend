@@ -13,6 +13,7 @@ const InputdatSchema = new Schema(
 		date: { type: Date, default: new Date() },
 		measurement: { type: String },
 		norm: { type: String, required: true}, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+		type: { type: String, enum: ['Subproductos', 'Residuos']},
 		categorie: { type: String, required: true, enum: [
 			"Ambiental",
 			"Social",
@@ -44,9 +45,14 @@ InputdatSchema.pre("save", async function (next) {
 	}
 	try {
 		const inputDat = this;
-		const lastInputDat = await InputDat.findOne({ company: inputDat.company }).sort({ index: -1 });
+		const lastInputDat = await InputDat.findOne({ company: inputDat.company, name:inputDat.name}).sort({ index: -1 });
 		if (lastInputDat) {
-			inputDat.index = lastInputDat.index + 1;
+			inputDat.index = lastInputDat.index;
+		} else{
+			const lastInputDatSameCompany = await InputDat.findOne({ company: inputDat.company }).sort({ index: -1 });
+            if (lastInputDatSameCompany) {
+                inputDat.index = lastInputDatSameCompany.index + 1;
+            }
 		}
 		next();
 	} catch (error) {
