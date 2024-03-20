@@ -67,6 +67,8 @@ export const registerCompany = async (req, res) => {
             if (!findManager) return res.status(400).send({ message: 'Manager not found' });
         }
 
+        const { user } = req;
+
         const initialBranch = new Branch({
             _id: new Types.ObjectId(),
             name: 'Principal',
@@ -74,7 +76,8 @@ export const registerCompany = async (req, res) => {
             address,
             email,
             company: CompanySaved._id,
-            manager: manager
+            manager: manager,
+            assignedUsers: [user._id]
         })
         //Save the branch
         const branch = await initialBranch.save();
