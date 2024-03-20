@@ -41,19 +41,32 @@ const InputdatSchema = new Schema(
 );
 //Override pre save method to increment the index of the input data
 InputdatSchema.pre("save", async function (next) {
-	if (!this.isNew) {
-		return next();
-	}
-	try {
-		const inputDat = this;
-		const lastInputDat = await InputDat.findOne({ company: inputDat.company }).sort({ index: -1 });
-		if (lastInputDat) {
-			inputDat.index = lastInputDat.index + 1;
-		}
-		next();
-	} catch (error) {
-		next(error)
-	}
+    if (!this.isNew) {
+        return next();
+    }
+    try {
+        console.log("llega a funcion de middleware");
+        const inputDat = this;
+        console.log("🚀 in pre middleware ~ inputDat:", inputDat);
+
+        const lastInputDat = await InputDat.findOne({
+            company: inputDat.company,
+            name: inputDat.name,
+        }).sort({ index: -1 });
+        if (lastInputDat) {
+            inputDat.index = lastInputDat.index;
+        } else {
+            const lastInputDatSameCompany = await InputDat.findOne({
+                company: inputDat.company,
+            }).sort({ index: -1 });
+            if (lastInputDatSameCompany) {
+                inputDat.index = lastInputDatSameCompany.index + 1;
+            }
+        }
+        next();
+    } catch (error) {
+        next(error);
+    }
 });
 
 

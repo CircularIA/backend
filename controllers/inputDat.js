@@ -152,15 +152,19 @@ export const getInputDatsByIndicator = async (req, res) => {
 };
 export const registerInputDat = async (req, res) => {
 	try {
-		const {index, name, description, value, date, measurement, norm, categorie} =
+		const { index, name, description, value, date, measurement, norm, categorie } =
 			req.body;
-		
+
 		const currentUser = req.user;
 		//Obtener el usuario
 		const user = await User.findOne({ _id: currentUser._id });
-		req.body.user = user;
+		req.body.user = {
+			username: user.username,
+			email: user.email,
+			role: user.role
+		}
 		//Obtain the indicator and the branch by params
-		const { company, branch} = req.params;
+		const { company, branch } = req.params;
 		//Verify if the company and the branch exist
 		const currentCompany = await Company.findOne({ _id: company });
 		if (!currentCompany)
@@ -168,12 +172,76 @@ export const registerInputDat = async (req, res) => {
 		const currentBranch = await Branch.findOne({ _id: branch });
 		if (!currentBranch)
 			return res.status(400).send({ message: "Branch not found" });
+		// Extraer el mes y el año de la fecha proporcionada
+		const providedDate = new Date(date);
+		const month = providedDate.getMonth();
+		const year = providedDate.getFullYear();
+		// Check if there is an InputDat with the same name, company, branch and month/year.
+		const existingInputDat = await InputDat.findOne({
+			name,
+			company,
+			branch,
+			date: {
+				$gte: new Date(year, month, 1),
+				$lt: new Date(year, month + 1, 1)
+			}
+		});
+
+		if (existingInputDat) {
+			return res.status(400).send({ message: "An InputDat with the same name and date already exists for this branch." });
+		}
 		req.body.company = company;
 		req.body.branch = branch;
 
+		// Register inputDat in Branch
+
 		//Validate the input dat values using schema validator of mongoose
 		await InputDat.validateNewInputDat(req.body);
-		return res.status(200).send({ inputDat: savedInputDat });
+		const newInputDat = new InputDat({
+			_id: new Types.ObjectId(),
+			...req.body
+		});
+		const savedInputDat = await newInputDat.save();
+		if (savedInputDat) {
+			const branchHasInputDat = await Branch.findOne({
+				_id: currentBranch._id,
+				'inputDats.index': savedInputDat.index
+			});
+			if (!branchHasInputDat) {
+				const updatedBranch = await Branch.findByIdAndUpdate(
+					currentBranch._id,
+					{
+						$push: {
+							inputDats: {
+								name: savedInputDat.name,
+								description: savedInputDat.description,
+								index: savedInputDat.index,
+								norm: savedInputDat.norm,
+								categorie: savedInputDat.categorie
+							}
+						}
+					},
+					{ new: true }
+				);
+
+				if (updatedBranch) {
+					// Si se actualiza correctamente, devuelve la respuesta con el Branch actualizado y el InputDat
+					return res.status(200).send({
+						message: "InputDat added to Branch successfully",
+						branch: updatedBranch,
+						inputDat: savedInputDat
+					});
+				} else {
+					// Si no se puede actualizar el Branch, lanza un error
+					return res.status(400).send({ message: "Unable to update Branch with new InputDat" });
+				}
+			}
+			return res.status(200).send({
+				message: "InputDat added successfully",
+				branch: currentBranch._id,
+				inputDat: savedInputDat
+			})
+		}
 	} catch (error) {
 		console.log("error", error);
 		if (error.name === "ValidationError") return res.status(400).send({ message: error.message });

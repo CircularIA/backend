@@ -24,23 +24,17 @@ const branchSchema = new Schema(
 		//Indicadores de la sucursal
 		inputDats: [
 			{
-				inputDat: {
-					type: Schema.Types.ObjectId,
-					ref: "InputDat",
-				},
 				name: { type: String },
-				// activeRegisters: [
-				// 	{
-				// 		date: { type: Date, default: new Date() }, //Fecha de activacion (año, mes, dia)
-				// 		active: { type: Boolean, default: true }, //Valor de activacion
-				// 		user: {
-				// 			//Usuario que activo el indicador
-				// 			name: { type: String },
-				// 			email: { type: String },
-				// 			role: { type: String },
-				// 		},
-				// 	},
-				// ],
+				description: { type: String },
+				index: { type: Number },
+				norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+				categorie: {
+					type: String, required: true, enum: [
+						"Ambiental",
+						"Social",
+						"Economica",
+					]
+				},
 			},
 		],
 		//Users assigned to the branch

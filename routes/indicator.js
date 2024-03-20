@@ -9,7 +9,6 @@ import {
 	getIndicatorValue,
 	registerIndicator,
 	updateIndicator,
-	assignIndicator,
 } from "../controllers/indicator.js";
 
 //Get routes
@@ -32,12 +31,6 @@ router.patch(
 	verifyToken,
 	checkRole(["Admin", "Owner"]),
 	updateIndicator
-);
-router.patch(
-	"/assign",
-	verifyToken,
-	checkRole(["Admin", "Owner"]),
-	assignIndicator
 );
 
 export default router;
