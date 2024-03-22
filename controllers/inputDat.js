@@ -152,7 +152,6 @@ export const getInputDatsByIndicator = async (req, res) => {
 };
 export const registerInputDat = async (req, res) => {
 	try {
-		
 		const currentUser = req.user;
 		//Obtener el usuario
 		const user = await User.findOne({ _id: currentUser._id });
@@ -160,9 +159,9 @@ export const registerInputDat = async (req, res) => {
 			username: user.username,
 			email: user.email,
 			role: user.role,
-		}
+		};
 		//Obtain the indicator and the branch by params
-		const { company, branch} = req.params;
+		const { company, branch } = req.params;
 		//Verify if the company and the branch exist
 		const currentCompany = await Company.findOne({ _id: company });
 		if (!currentCompany)
@@ -172,9 +171,6 @@ export const registerInputDat = async (req, res) => {
 			return res.status(400).send({ message: "Branch not found" });
 		req.body.company = company;
 		req.body.branch = branch;
-		console.log("req body", req.body);
-		console.log("req user", req.body.user);
-		console.log("req user", req.body.user.$__);
 
 		//Validate the input dat values using schema validator of mongoose
 		await InputDat.validateNewInputDat(req.body);
@@ -183,16 +179,15 @@ export const registerInputDat = async (req, res) => {
 			_id: new Types.ObjectId(),
 			...req.body,
 		});
-		console.log("inputDat", inputDat);
 		const savedInputDat = await inputDat.save();
-		console.log("savedInputDat", savedInputDat);
-		if (!savedInputDat){
+		if (!savedInputDat) {
 			return res.status(400).send({ message: "Input data not saved" });
 		}
 		return res.status(200).send({ inputDat: savedInputDat });
 	} catch (error) {
 		console.log("error", error);
-		if (error.name === "ValidationError") return res.status(400).send({ message: error.message });
+		if (error.name === "ValidationError")
+			return res.status(400).send({ message: error.message });
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
@@ -201,87 +196,88 @@ export const registerInputDat = async (req, res) => {
 export const registerInputDatsMany = async (req, res) => {
 	//const { name, value, date, measurement, company, branch, indicator } = req.body;
 	//Hay valores que son generales, como la compañia, la sucursal y el indicador
-	const { branch, indicator } = req.params;
+	const { company, branch } = req.params;
 	const { inputDats } = req.body;
 	//Verif icar que la compañia, sucursal  y el indicador exista
 	const currentBranch = await Branch.findOne({ _id: branch });
 	if (!currentBranch)
 		return res.status(400).send({ message: "Branch not found" });
-	//Check if the indicator exist
-	const currentIndicator = await Indicator.findOne({ _id: indicator });
-	if (!currentIndicator)
-		return res.status(400).send({ message: "Indicator not found" });
-	//Check if the indicator is assigned to the branch
-	const indicatorExist = currentBranch.indicators.find(
-		(item) => item.indicator.toString() === currentIndicator._id.toString()
-	);
-	if (!indicatorExist)
-		return res
-			.status(400)
-			.send({ message: "Indicator not assigned to the branch" });
-	//Check if the indicator is active on the branch
-	if (!indicatorExist.active)
-		return res
-			.status(400)
-			.send({ message: "Indicator is not active on the branch" });
+	//Check if the company exist
+	const currentCompany = await Company.findOne({ _id: company });
+	if (!currentCompany)
+		return res.status(400).send({ message: "Company not found" });
 	//Obtener usuario
-	const user = await User.findOne({ _id: req.user._id });
-	if (!user) return res.status(400).send({ message: "User not found" });
-	//Iniciar la transacción de mongo
-	const session = await startSession();
+	const currentUser = req.user;
+	//Obtener el usuario
+	const user = await User.findOne({ _id: currentUser._id });
+	console.log("🚀 ~ registerInputDatsMany ~ user:", user);
+
 	try {
-		await session.withTransaction(async () => {
-			//Verificar si el indicador ya esta en la sucursal
-			if (!currentBranch.indicators.includes(currentIndicator._id)) {
-				currentBranch.indicators.push(currentIndicator._id);
-				await currentBranch.save({ session });
-			}
-			//Crear los input dats
-			for (const inputDat of inputDats) {
-				inputDat.indicator = indicator;
-				inputDat.company = currentBranch.company;
-				inputDat.branch = branch;
-				inputDat.user = {
-					name: user.username,
-					email: user.email,
-					role: user.role,
-				};
-				//Validate the input dat values using schema validator of mongoose
-				await InputDat.validateInputDat(inputDat);
-				const { name, value, date, measurement } = inputDat;
+		//Crear los input dats
+		//Obtener ultimo indice
+		const lastInputDat = await InputDat.findOne({
+			company,
+			branch,
+		}).sort({ index: -1 });
+		let index = lastInputDat ? lastInputDat.index : 0;
+		for (let inputDat of inputDats) {
+			inputDat.company = company;
+			inputDat.branch = branch;
+			inputDat.user = {
+				username: user.username,
+				email: user.email,
+				role: user.role,
+			};
+			console.log(
+				"🚀 ~ awaitsession.withTransaction ~ inputDat:",
+				inputDat
+			);
+			//Validate the input dat values using schema validator of mongoose
+			await InputDat.validateNewInputDat(inputDat);
+			//Post validation, create the input dat
 
-				const existingInputDats = await InputDat.findOne({
-					name,
-					branch,
-					indicator,
-				}).session(session);
-				//Verificar si la medida es la misma
-				if (
-					existingInputDats &&
-					existingInputDats.measurement !== measurement
-				) {
-					throw new Error(
-						"Input data already exist but the measurement is different"
-					);
-				}
+			//Verificar si existe un input dat con el mismo nombre, sucursal e indicador
 
+			const existingInputDats = await InputDat.findOne({
+				name: inputDat.name,
+				branch,
+				company,
+			});
+			if (existingInputDats) {
 				const newInputDat = new InputDat({
 					_id: new Types.ObjectId(),
 					...inputDat,
+					index: existingInputDats.index,
 				});
-				await newInputDat.save({ session });
-			}
-		});
+				console.log(
+					"🚀 ~ awaitsession.withTransaction ~ newInputDat:",
+					newInputDat
+				);
+				await newInputDat.save();
+			} else {
+				const newInputDat = new InputDat({
+					_id: new Types.ObjectId(),
+					...inputDat,
+					index: index + 1,
+				});
+				console.log(
+					"🚀 ~ awaitsession.withTransaction ~ newInputDat:",
+					newInputDat
+				);
 
+				await newInputDat.save();
+				index++;
+			}
+		}
 		res.status(200).send({ message: "Input data saved" });
 	} catch (error) {
-		console.log("error", error);
+		if (error.name === "ValidationError") {
+			return res.status(400).send({ message: error.message });
+		}
 		res.status(500).send({
 			message: "Internal Server Error",
 			error: error.message,
 		});
-	} finally {
-		session.endSession();
 	}
 };
 

@@ -12,13 +12,13 @@ const InputdatSchema = new Schema(
 		value: { type: Number, required: [true, "Value is required"] },
 		date: { type: Date, default: new Date() },
 		measurement: { type: String },
-		norm: { type: String, required: true}, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-		type: { type: String, enum: ['Subproductos', 'Residuos']},
-		categorie: { type: String, required: true, enum: [
-			"Ambiental",
-			"Social",
-			"Economica",
-		]}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+		norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+		type: { type: String, enum: ["Subproductos", "Residuos"] },
+		categorie: {
+			type: String,
+			required: true,
+			enum: ["Ambiental", "Social", "Economica"],
+		}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
 		company: {
 			type: Schema.Types.ObjectId,
 			ref: "Company",
@@ -31,7 +31,10 @@ const InputdatSchema = new Schema(
 		},
 		//User that register the input data and is required
 		user: {
-			username: { type: String, required: [true, "User name is required"] },
+			username: {
+				type: String,
+				required: [true, "User name is required"],
+			},
 			email: { type: String, required: [true, "User email is required"] },
 			role: { type: String, required: [true, "User role is required"] },
 		},
@@ -40,26 +43,33 @@ const InputdatSchema = new Schema(
 );
 //Override pre save method to increment the index of the input data
 InputdatSchema.pre("save", async function (next) {
-	if (!this.isNew){
+	if (!this.isNew) {
 		return next();
 	}
 	try {
+		console.log("llega a funcion de middleware");
 		const inputDat = this;
-		const lastInputDat = await InputDat.findOne({ company: inputDat.company, name:inputDat.name}).sort({ index: -1 });
+		console.log("🚀 in pre middleware ~ inputDat:", inputDat);
+
+		const lastInputDat = await InputDat.findOne({
+			company: inputDat.company,
+			name: inputDat.name,
+		}).sort({ index: -1 });
 		if (lastInputDat) {
 			inputDat.index = lastInputDat.index;
-		} else{
-			const lastInputDatSameCompany = await InputDat.findOne({ company: inputDat.company }).sort({ index: -1 });
-            if (lastInputDatSameCompany) {
-                inputDat.index = lastInputDatSameCompany.index + 1;
-            }
+		} else {
+			const lastInputDatSameCompany = await InputDat.findOne({
+				company: inputDat.company,
+			}).sort({ index: -1 });
+			if (lastInputDatSameCompany) {
+				inputDat.index = lastInputDatSameCompany.index + 1;
+			}
 		}
 		next();
 	} catch (error) {
-		next(error)
+		next(error);
 	}
 });
-
 
 //Methods of validate
 InputdatSchema.statics.validateNewInputDat = async function (id) {
@@ -88,7 +98,7 @@ InputdatSchema.statics.validateNewInputDat = async function (id) {
 		user: Joi.object({
 			username: Joi.string()
 				.required()
-				.label("Name")
+				.label("Name User")
 				.messages({ "string.empty": "Name is required" }),
 			email: Joi.string()
 				.required()
