@@ -8,6 +8,7 @@ import {
 	getBranch,
 	registerBranch,
 	updateBranch,
+	deleteBranch
 } from "../controllers/branch.js";
 
 //Get Routes
@@ -27,4 +28,10 @@ router.patch(
 	updateBranch
 );
 
+router.delete(
+	"/delete/:id",
+	verifyToken,
+	checkRole(["Admin", "Owner"]),
+	deleteBranch
+)
 export default router;

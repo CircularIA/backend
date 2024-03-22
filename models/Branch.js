@@ -17,22 +17,22 @@ const branchSchema = new Schema(
 			required: [true, "Company is required"],
 		},
 		manager: {
-			name: { type: String },
-			email: { type: String },
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: [true, "Manager is required"],
 		},
 		//Indicadores de la sucursal
 		inputDats: [
 			{
 				name: { type: String },
 				description: { type: String },
-				index : { type: Number },
-				norm: { type: String, required: true}, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-				type: { type: String, enum: ['Subproductos', 'Residuos']},
-				categorie: { type: String, required: true, enum: [
-					"Ambiental",
-					"Social",
-					"Economica",
-				]},
+				index: { type: Number },
+				norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
+				categorie: {
+					type: String,
+					required: true,
+					enum: ["Ambiental", "Social", "Economica"],
+				},
 			},
 		],
 		//Users assigned to the branch
@@ -53,20 +53,27 @@ branchSchema.statics.validateBranch = async function (id) {
 			.required()
 			.label("Name")
 			.messages({ "string.empty": "Name is required" }),
-		description: Joi.string().label("Description"),
+		description: Joi.string().allow("").label("Description"),
 		address: Joi.string().required().label("Address"),
-		phone: Joi.string().label("Phone"),
-		email: Joi.string().email().label("Email"),
+		phone: Joi.string().allow("").label("Phone"),
+		email: Joi.string().email().allow("").label("Email"),
 		company: Joi.string()
 			.required()
 			.label("Company")
 			.messages({ "string.empty": "Company is required" }),
-		manager: Joi.object({
-			name: Joi.string().label("Manager name"),
-			email: Joi.string().email().label("Manager email"),
-		}),
-		inputDats: Joi.array().items(Joi.string()).label("InputDats"),
-		asignedUsers: Joi.array().items(Joi.string()).label("Asigned users"),
+		manager: Joi.string()
+			.required()
+			.label("Manager")
+			.messages({ "string.empty": "Manager is required" }),
+		inputDats: Joi.array()
+			.items(
+				Joi.object({
+					inputDat: Joi.string().required().label("InputDat ID"),
+					name: Joi.string().required().label("InputDat Name"),
+				})
+			)
+			.label("InputDats"),
+		assignedUsers: Joi.array().items(Joi.string()).label("Assigned users"),
 	});
 	return Schema.validateAsync(id);
 };
@@ -81,11 +88,8 @@ branchSchema.statics.validateUpdateBranch = async function (id) {
 		phone: Joi.string().label("Phone"),
 		email: Joi.string().email().label("Email"),
 		status: Joi.boolean().label("Status"),
-		manager: Joi.object({
-			name: Joi.string().label("Manager name"),
-			email: Joi.string().email().label("Manager email"),
-		}),
-		asignedUsers: Joi.array().items(Joi.string()).label("Asigned users"),
+		manager: Joi.string().label("Manager"),
+		assignedUsers: Joi.array().items(Joi.string()).label("Assigned users"),
 	});
 	return Schema.validateAsync(id);
 };

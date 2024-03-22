@@ -53,11 +53,6 @@ const companySchema = new Schema({
         ref: 'User',
         type: Schema.Types.ObjectId,
     },
-    //*Indicadores que calcula la empresa con la finalidad de tenerlos de manera general
-    indicators: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Indicator',
-    }],
     //Company branches
     branches: [{
         type: Schema.Types.ObjectId,
@@ -99,7 +94,6 @@ companySchema.statics.validateUpdateCompany = async function (id) {
         environmentalPrioritys: Joi.array().label('Environmental Prioritys'),
         typeMachinerys: Joi.array().label('Type Machinerys'),
         proyectosECI: Joi.array().label('Proyectos ECI'),
-        indicators: Joi.array().label('Indicators'),
         branches: Joi.array().label('Branches'),
     });
     return Schema.validateAsync(id);

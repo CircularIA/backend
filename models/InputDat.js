@@ -13,7 +13,6 @@ const InputdatSchema = new Schema(
 		date: { type: Date, default: new Date() },
 		measurement: { type: String },
 		norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-		type: { type: String, enum: ["Subproductos", "Residuos"] },
 		categorie: {
 			type: String,
 			required: true,
@@ -159,6 +158,8 @@ InputdatSchema.statics.validateFirstInputDat = async function (id) {
 			.label("Name")
 			.messages({ "string.empty": "Name is required" }),
 		measurement: Joi.string().label("Measurement"),
+		description: Joi.string().label("Description").allow(""),
+		norm: Joi.string().label("Norm").allow(""),
 	});
 	return Schema.validateAsync(id);
 };

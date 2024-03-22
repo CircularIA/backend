@@ -15,7 +15,7 @@ const getValue = (name, inputDatsValues, factors) => {
 		const valores = {
 			generacionLodos: 0,
 			valCompostaje: 0,
-			valMasa : 0,
+			valMasa: 0,
 			valBiodigestion: 0,
 			valTratamientoRiles: 0,
 			entradaMunicipal: 0,
@@ -33,7 +33,7 @@ const getValue = (name, inputDatsValues, factors) => {
 				valores["valBiodigestion"] = inputDat.value;
 			} else if (inputDat.name === "valorización planta de riles") {
 				valores["valTratamientoRiles"] = inputDat.value;
-			} else if (inputDat.name === "entrada de residuos municipales"){
+			} else if (inputDat.name === "entrada residuos municipales") {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
@@ -47,6 +47,7 @@ const getValue = (name, inputDatsValues, factors) => {
 		} else {
 			valores["potencialValorizacion"] = valorizado;
 		}
+		console.log(valores)
 		const valorizacionCicloBiologico =
 			valorizado / valores["potencialValorizacion"];
 		return valorizacionCicloBiologico * 100;
@@ -101,26 +102,12 @@ const monthNumberToName = (monthNumber) => {
 
 export const getIndicators = async (req, res) => {
 	try {
-		//Si no hay branch devolver todos los indicators
-		if (!req.params.branch) {
-			const indicators = await Indicator.find();
-			if (!indicators)
-				return res
-					.status(400)
-					.send({ message: "Indicators not found" });
-			return res.status(200).send({ indicators });
-		} else {
-			//Se obtendra todos los indicadores
-			const { branch } = req.params;
-			const branchIndicators = await Branch.findById(branch).populate(
-				"indicators.indicator"
-			);
-			if (!branchIndicators)
-				return res
-					.status(400)
-					.send({ message: "Indicators not found" });
-			return res.status(200).send({ branchIndicators });
-		}
+		const indicators = await Indicator.find();
+		if (!indicators)
+			return res
+				.status(400)
+				.send({ message: "Indicators not found" });
+		return res.status(200).send({ indicators });
 	} catch (error) {
 		console.log("error", error);
 		res.status(500).send({ message: "Internal Server Error" });
@@ -140,6 +127,7 @@ export const getIndicatorValue = async (req, res) => {
 		const branchExist = await Branch.findById(branch);
 		if (!branchExist)
 			return res.status(400).send({ message: "Branch not found" });
+		const inputDatIndexes = branchExist.inputDats.map(inputDat => inputDat.index)
 		const year = req.params.year;
 		//Si no se indica el mes, se obtendra el valor del año
 		let month = req.params.month;
@@ -167,11 +155,11 @@ export const getIndicatorValue = async (req, res) => {
 				const inputDatValues = await InputDat.aggregate([
 					{
 						$match: {
+							index: { $in: inputDatIndexes },
 							date: {
 								$gte: startDate,
 								$lte: endDate,
 							},
-							indicator: currentIndicator._id,
 							branch: branchExist._id,
 						},
 					},
@@ -203,11 +191,11 @@ export const getIndicatorValue = async (req, res) => {
 			const inputDatsValues = await InputDat.aggregate([
 				{
 					$match: {
+						index: { $in: inputDatIndexes },
 						date: {
 							$gte: startDate,
 							$lte: endDate,
 						},
-						indicator: currentIndicator._id,
 						branch: branchExist._id,
 					},
 				},
@@ -313,83 +301,5 @@ export const updateIndicator = async (req, res) => {
 		if (error.isJoi)
 			return res.status(400).send({ message: error.details[0].message });
 		res.status(500).send({ message: "Internal Server Error" });
-	}
-};
-//Asignar indicadores a una sucursal
-export const assignIndicator = async (req, res) => {
-	try {
-		//Obtener los valores de entrada
-		const { branch, indicator } = req.body;
-		//Obtener la sucursal
-		const branchExist = await Branch.findById(branch).populate(
-			"indicators"
-		);
-		if (!branchExist)
-			return res.status(400).send({ message: "Branch not found" });
-		//Obtener los indicadores
-		const indicatorExist = await Indicator.findById(indicator);
-		if (!indicatorExist)
-			return res.status(400).send({ message: "Indicator not found" });
-		//Obtener el usuario
-		const currentUser = await User.findById(req.user._id);
-		if (!currentUser)
-			return res.status(400).send({ message: "User not found" });
-		//!Verificar si el usuario tiene permiso para asignar indicadores a esta sucursal
-		//Verificar si el indicador ya esta asignado a la sucursal
-		const indicatorAssigned = branchExist.indicators.find(
-			(item) =>
-				item.indicator._id.toString() === indicatorExist._id.toString()
-		);
-		if (indicatorAssigned)
-			return res
-				.status(400)
-				.send({ message: "Indicator already assigned" });
-		//Datos de entrada asignados
-		let assignedInputDats = [];
-		for (const inputDat of indicatorExist.inputDats) {
-			assignedInputDats.push({
-				name: inputDat.name,
-				measurement: inputDat.measurement,
-				active: true,
-				activeRegisters: [
-					{
-						date: new Date(),
-						active: true,
-						user: {
-							name: currentUser.username,
-							email: currentUser.email,
-							role: currentUser.role,
-						},
-					},
-				],
-			});
-		}
-		const assignedIndicator = {
-			indicator: indicatorExist._id,
-			sourceType: indicatorExist.sourceType,
-			inputDats: assignedInputDats,
-			active: true,
-			activeRegisters: [
-				{
-					date: new Date(),
-					active: true,
-					user: {
-						name: currentUser.username,
-						email: currentUser.email,
-						role: currentUser.role,
-					},
-				},
-			],
-		};
-		branchExist.indicators.push(assignedIndicator);
-		//Save the branch
-		await branchExist.save();
-		res.status(200).send({ message: "Indicators assigned" });
-	} catch (error) {
-		console.log("error", error);
-		res.status(500).send({
-			message: "Internal Server Error",
-			error: error,
-		});
 	}
 };
