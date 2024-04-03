@@ -11,7 +11,9 @@ import Company from "../models/Company.js";
 export const getInputDats = async (req, res) => {
 	try {
 		const { branch } = req.params;
-		const inputDats = await InputDat.find({ branch });
+		const inputDats = await InputDat.find({ branch }).populate(
+			"listInputDat"
+		);
 		if (!inputDats)
 			return res.status(400).send({ message: "Input data not found" });
 		return res.status(200).send({ inputDats });
