@@ -24,17 +24,11 @@ const branchSchema = new Schema(
 		//Indicadores de la sucursal
 		inputDats: [
 			{
-				name: { type: String },
-				description: { type: String },
-				index: { type: Number },
-				norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-				categorie: {
-					type: String,
-					required: true,
-					enum: ["Ambiental", "Social", "Economica"],
-				},
+				type: Schema.Types.ObjectId,
+				ref: "ListInputDat",
 			},
 		],
+
 		//Users assigned to the branch
 		assignedUsers: [
 			{

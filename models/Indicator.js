@@ -26,10 +26,8 @@ const IndicatorsSchema = new Schema(
 		measurement: { type: String }, //Unidad de medida del indicador
 		inputDats: [
 			{
-				name: { type: String },
-				measurement: { type: String },
-				description: { type: String },
-				norm: { type: String },
+				type: Schema.Types.ObjectId,
+				ref: "ListInputDat",
 			},
 		],
 		//Valores constantes que se utilizan en la formula

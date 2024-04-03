@@ -4,20 +4,13 @@ import Joi from "joi-oid";
 const InputdatSchema = new Schema(
 	{
 		_id: Schema.Types.ObjectId,
-		//Index of equal inputs data
-		index: { type: Number, default: 0 },
-		//Name of the input data
-		name: { type: String, required: [true, "Name is required"] },
-		description: { type: String },
 		value: { type: Number, required: [true, "Value is required"] },
 		date: { type: Date, default: new Date() },
-		measurement: { type: String },
-		norm: { type: String, required: true }, //Fuente de donde se obtuvo el dato (CTI Tools, Norma ESRS E5)
-		categorie: {
-			type: String,
-			required: true,
-			enum: ["Ambiental", "Social", "Economica"],
-		}, //Categoria a la que pertenece el indicador (Ambiental, Social, Economica)
+		//Ref to the list input dat schema
+		listInputDat: {
+			type: Schema.Types.ObjectId,
+			ref: "ListInputDat",
+		},
 		company: {
 			type: Schema.Types.ObjectId,
 			ref: "Company",
@@ -40,52 +33,16 @@ const InputdatSchema = new Schema(
 	},
 	{ timestamps: true }
 );
-//Override pre save method to increment the index of the input data
-InputdatSchema.pre("save", async function (next) {
-	if (!this.isNew) {
-		return next();
-	}
-	try {
-		console.log("llega a funcion de middleware");
-		const inputDat = this;
-		console.log("🚀 in pre middleware ~ inputDat:", inputDat);
-
-		const lastInputDat = await InputDat.findOne({
-			company: inputDat.company,
-			name: inputDat.name,
-		}).sort({ index: -1 });
-		if (lastInputDat) {
-			inputDat.index = lastInputDat.index;
-		} else {
-			const lastInputDatSameCompany = await InputDat.findOne({
-				company: inputDat.company,
-			}).sort({ index: -1 });
-			if (lastInputDatSameCompany) {
-				inputDat.index = lastInputDatSameCompany.index + 1;
-			}
-		}
-		next();
-	} catch (error) {
-		next(error);
-	}
-});
 
 //Methods of validate
 InputdatSchema.statics.validateNewInputDat = async function (id) {
 	const Schema = Joi.object({
-		name: Joi.string()
-			.required()
-			.label("Name")
-			.messages({ "string.empty": "Name is required" }),
-		description: Joi.string().label("Description"),
 		value: Joi.number()
 			.required()
 			.label("Value")
 			.messages({ "number.empty": "Value is required" }),
 		date: Joi.date().required().label("Date"),
-		measurement: Joi.string().label("Measurement"),
-		norm: Joi.string().required().label("Norm"),
-		categorie: Joi.string().required().label("Categorie"),
+		listInputDat: Joi.objectId().label("List Input Dat"),
 		company: Joi.objectId()
 			.required()
 			.label("Company")
@@ -120,16 +77,11 @@ InputdatSchema.statics.validateUpdateInputDat = async function (id) {
 			.required()
 			.label("Id")
 			.messages({ "string.empty": "Id is required" }),
-		name: Joi.string()
-			.required()
-			.label("Name")
-			.messages({ "string.empty": "Name is required" }),
 		value: Joi.number()
 			.required()
 			.label("Value")
 			.messages({ "number.empty": "Value is required" }),
 		date: Joi.date().label("Date"),
-		measurement: Joi.string().label("Measurement"),
 		user: Joi.object({
 			name: Joi.string()
 				.required()
@@ -146,20 +98,6 @@ InputdatSchema.statics.validateUpdateInputDat = async function (id) {
 		})
 			.label("User")
 			.messages({ "object.empty": "User is required" }),
-	});
-	return Schema.validateAsync(id);
-};
-
-//Method to validate the code in register indicator
-InputdatSchema.statics.validateFirstInputDat = async function (id) {
-	const Schema = Joi.object({
-		name: Joi.string()
-			.required()
-			.label("Name")
-			.messages({ "string.empty": "Name is required" }),
-		measurement: Joi.string().label("Measurement"),
-		description: Joi.string().label("Description").allow(""),
-		norm: Joi.string().label("Norm").allow(""),
 	});
 	return Schema.validateAsync(id);
 };
