@@ -1,0 +1,20 @@
+import express from "express";
+const router = express.Router();
+
+import verifyToken from "../middlewares/verifyToken.js";
+import checkRole from "../middlewares/role-authorize.js";
+
+//Controllers
+import {
+	getListInputDats,
+	createListInputDat,
+	updateListInputDat,
+	deleteListInputDat,
+} from "../controllers/listInputDat.js";
+
+router.get("/", verifyToken, getListInputDats);
+router.post("/", verifyToken, createListInputDat);
+router.patch("/:id", verifyToken, updateListInputDat);
+router.delete("/:id", verifyToken, deleteListInputDat);
+
+export default router;

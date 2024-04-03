@@ -28,8 +28,7 @@ const getValue = (name, inputDatsValues, factors) => {
 				valores["valCompostaje"] = inputDat.value;
 			} else if (inputDat.name === "valorización masas") {
 				valores["valMasa"] = inputDat.value;
-			}
-			else if (inputDat.name === "valorización biodigestión") {
+			} else if (inputDat.name === "valorización biodigestión") {
 				valores["valBiodigestion"] = inputDat.value;
 			} else if (inputDat.name === "valorización planta de riles") {
 				valores["valTratamientoRiles"] = inputDat.value;
@@ -40,18 +39,23 @@ const getValue = (name, inputDatsValues, factors) => {
 		console.log("factores", factors);
 		const factorValue = factors[0]["value"];
 		console.log("factorValue", factorValue);
-		const valorizado = (valores["generacionLodos"] + valores["valCompostaje"] + valores["valMasa"] + valores["valBiodigestion"] + valores["valTratamientoRiles"])
+		const valorizado =
+			valores["generacionLodos"] +
+			valores["valCompostaje"] +
+			valores["valMasa"] +
+			valores["valBiodigestion"] +
+			valores["valTratamientoRiles"];
 		//Condicion si maneja entradas municipales o no
 		if (valores["entradaMunicipal"] > 0) {
-			valores["potencialValorizacion"] = valores["entradaMunicipal"] * factorValue + valorizado;
+			valores["potencialValorizacion"] =
+				valores["entradaMunicipal"] * factorValue + valorizado;
 		} else {
 			valores["potencialValorizacion"] = valorizado;
 		}
-		console.log(valores)
 		const valorizacionCicloBiologico =
 			valorizado / valores["potencialValorizacion"];
 		return valorizacionCicloBiologico * 100;
-	} else if (name === "porcentaje de valorizacion ciclo tecnico") {
+	} else if (name === "porcentaje de valorización ciclo técnico") {
 		let factorValue = 0;
 		const valores = {
 			entradaResiduos: 0,
@@ -104,9 +108,7 @@ export const getIndicators = async (req, res) => {
 	try {
 		const indicators = await Indicator.find();
 		if (!indicators)
-			return res
-				.status(400)
-				.send({ message: "Indicators not found" });
+			return res.status(400).send({ message: "Indicators not found" });
 		return res.status(200).send({ indicators });
 	} catch (error) {
 		console.log("error", error);
@@ -127,16 +129,14 @@ export const getIndicatorValue = async (req, res) => {
 		const branchExist = await Branch.findById(branch);
 		if (!branchExist)
 			return res.status(400).send({ message: "Branch not found" });
-		const inputDatIndexes = branchExist.inputDats.map(inputDat => inputDat.index)
+		const inputDatIndexes = branchExist.inputDats.map(
+			(inputDat) => inputDat.index
+		);
 		const year = req.params.year;
 		//Si no se indica el mes, se obtendra el valor del año
 		let month = req.params.month;
 		//Obtener los datos de entrada asociados al indicador
 		if (!month) {
-			console.log(
-				"no se ingreso el mes, se obtendra los valores del año: ",
-				year
-			);
 			//Obtener los valores de los input dats del año
 			const monthValues = [];
 			//Explorar cada mes del año
@@ -164,6 +164,11 @@ export const getIndicatorValue = async (req, res) => {
 						},
 					},
 				]);
+				console.log(
+					"🚀 ~ getIndicatorValue ~ inputDatValues:",
+					inputDatValues
+				);
+
 				//Si no se encuentran valores, se retorna el valor por defecto
 				if (inputDatValues.length === 0) {
 					monthValues.push(monthValue);
@@ -204,7 +209,11 @@ export const getIndicatorValue = async (req, res) => {
 			if (inputDatsValues.length === 0) {
 				return res.status(200).send({ value: -1 });
 			} else {
-				const value = getValue(currentIndicator.name, inputDatsValues, currentIndicator.factors);
+				const value = getValue(
+					currentIndicator.name,
+					inputDatsValues,
+					currentIndicator.factors
+				);
 				return res.status(200).send({ value });
 			}
 		}
