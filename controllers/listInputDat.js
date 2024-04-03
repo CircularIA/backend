@@ -1,11 +1,20 @@
 //Models
+import Branch from "../models/Branch.js";
 import ListInputDat from "../models/ListInputDat.js";
 import mongoose from "mongoose";
 
 export const getListInputDats = async (req, res) => {
 	try {
-		const listInputDats = await ListInputDat.find();
-		res.status(200).json(listInputDats);
+		const { branch } = req.params;
+		if (branch) {
+			const listInputDats = await Branch.findById(branch).populate(
+				"inputDats"
+			);
+			return res.status(200).json(listInputDats);
+		} else {
+			const listInputDats = await ListInputDat.find();
+			res.status(200).json(listInputDats);
+		}
 	} catch (error) {
 		res.status(400).json({ message: error.message });
 	}
