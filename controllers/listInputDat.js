@@ -5,9 +5,7 @@ import mongoose from "mongoose";
 
 export const getListInputDats = async (req, res) => {
 	try {
-		console.log("entro aca esta wea");
 		const { branch } = req.params;
-		console.log("branch", branch);
 		if (branch) {
 			const listInputDats = await Branch.findById(branch).populate(
 				"inputDats"
