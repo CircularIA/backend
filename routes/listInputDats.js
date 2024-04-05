@@ -12,7 +12,7 @@ import {
 	deleteListInputDat,
 } from "../controllers/listInputDat.js";
 
-router.get("/:branch", verifyToken, getListInputDats);
+router.get("/:branch?", verifyToken, getListInputDats);
 router.post("/", verifyToken, createListInputDat);
 router.patch("/:id", verifyToken, updateListInputDat);
 router.delete("/:id", verifyToken, deleteListInputDat);
