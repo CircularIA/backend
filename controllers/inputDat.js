@@ -216,7 +216,6 @@ export const registerInputDat = async (req, res) => {
 		if (savedInputDat) {
 			//Logic to add new input dat to the branch
 			//Verify if the input dat is already in the branch
-			console.log("current branch", currentBranch);
 			const existingListInputDat = await Branch.findOne({
 				_id: branch,
 				inputDats: listInputDat,
@@ -268,8 +267,6 @@ export const registerInputDatsMany = async (req, res) => {
 	const currentUser = req.user;
 	//Obtener el usuario
 	const user = await User.findOne({ _id: currentUser._id });
-	console.log("🚀 ~ registerInputDatsMany ~ user:", user);
-
 	try {
 		//Crear los input dats
 		//Obtener ultimo indice
