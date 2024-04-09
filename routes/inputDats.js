@@ -6,7 +6,7 @@ import checkRole from '../middlewares/role-authorize.js';
 //Controllers
 import { getInputDats, getInputDatsByIndicator, registerInputDat, updateInputDat, updateInputDats, registerInputDatsMany } from '../controllers/inputDat.js';
 
-router.get('/:branch', verifyToken, getInputDats);
+router.get('/:branch/:year?/:month?/:day?', verifyToken, getInputDats);
 router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', verifyToken, getInputDatsByIndicator);
 //Post Routes
 router.post('/:company/:branch', verifyToken, registerInputDat);

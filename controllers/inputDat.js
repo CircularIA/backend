@@ -9,18 +9,44 @@ import User from "../models/User.js";
 import Company from "../models/Company.js";
 
 export const getInputDats = async (req, res) => {
-	try {
-		const { branch } = req.params;
-		const inputDats = await InputDat.find({ branch }).populate(
-			"listInputDat"
-		);
-		if (!inputDats)
-			return res.status(400).send({ message: "Input data not found" });
-		return res.status(200).send({ inputDats });
-	} catch (error) {
-		console.log("error", error);
-		res.status(500).send({ message: "Internal Server Error" });
-	}
+    try {
+        const { branch, year, month, day } = req.params;
+        let startDate, endDate;
+
+        if (year) {
+            if (month) {
+                if (day) {
+                    // Year, Month and Day provided
+                    startDate = new Date(year, month - 1, day);
+                    endDate = new Date(year, month - 1, day, 23, 59, 59, 999);
+                } else {
+                    // Year and Month provided
+                    startDate = new Date(year, month - 1);
+                    endDate = new Date(year, month, 0, 23, 59, 59, 999);
+                }
+            } else {
+                // Only Year provided
+                startDate = new Date(year, 0);
+                endDate = new Date(year, 11, 31, 23, 59, 59, 999);
+            }
+        }
+
+        let query = { branch };
+        if (startDate && endDate) {
+            query.date = {
+                $gte: startDate,
+                $lte: endDate,
+            };
+        }
+
+        const inputDats = await InputDat.find(query).populate("listInputDat");
+        if (!inputDats)
+            return res.status(400).send({ message: "Input data not found" });
+        return res.status(200).send({ inputDats });
+    } catch (error) {
+        console.log("error", error);
+        res.status(500).send({ message: "Internal Server Error" });
+    }
 };
 //Hay que definir 4 casos para este endpoint
 //Si no se recibe fecha, obtener todos los datos historicos
