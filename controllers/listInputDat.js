@@ -41,7 +41,7 @@ export const createListInputDat = async (req, res) => {
 export const updateListInputDat = async (req, res) => {
 	try {
 		//Validate the data
-		await ListInputDat.validateNewInputDat(req.body);
+		await ListInputDat.validateUpdateInputDat(req.body);
 
 		const { id } = req.params;
 		const listInputDat = await ListInputDat.findByIdAndUpdate(id, req.body);

@@ -12,6 +12,12 @@ const ListInputDatSchema = new Schema({
 		required: true,
 		enum: ["Ambiental", "Social", "Economica"],
 	},
+	norms: [
+		{
+			norm: { type: String },
+			type: { type: String },
+		},
+	],
 	subcategory: {
 		type: String,
 		required: true,
@@ -41,6 +47,12 @@ ListInputDatSchema.statics.validateNewInputDat = async (inputDat) => {
 		category: Joi.string()
 			.required()
 			.valid("Ambiental", "Social", "Economica"),
+		norms: Joi.array().items(
+			Joi.object({
+				norm: Joi.string(),
+				type: Joi.string(),
+			})
+		),
 		subcategory: Joi.string()
 			.required()
 			.valid(
@@ -58,6 +70,36 @@ ListInputDatSchema.statics.validateNewInputDat = async (inputDat) => {
 				"Porcentaje de participación femenina",
 				"Social explícito"
 			),
+	});
+};
+
+ListInputDatSchema.statics.validateUpdateInputDat = async (inputDat) => {
+	const schema = Joi.object({
+		name: Joi.string(),
+		description: Joi.string(),
+		measurement: Joi.string(),
+		category: Joi.string().valid("Ambiental", "Social", "Economica"),
+		norms: Joi.array().items(
+			Joi.object({
+				norm: Joi.string(),
+				type: Joi.string(),
+			})
+		),
+		subcategory: Joi.string().valid(
+			"Salida y valorización de Residuos, Productos y subproductos",
+			"Agua",
+			"Energía",
+			"Huella de carbono de salida",
+			"Entrada de suministros",
+			"Productividad circular de material",
+			"Porcentaje de ingreso por acciones circulares",
+			"Porcentaje inversión en circularidad",
+			"Empleo verde",
+			"Porcentaje de empleos circulares",
+			"Educación ambiental interna",
+			"Porcentaje de participación femenina",
+			"Social explícito"
+		),
 	});
 };
 
