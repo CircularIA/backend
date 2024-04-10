@@ -273,11 +273,10 @@ export const registerInputDat = async (req, res) => {
 
 //Endpoint para registrar varios datos de entrada
 export const registerInputDatsMany = async (req, res) => {
-	//const { name, value, date, measurement, company, branch, indicator } = req.body;
-	//Hay valores que son generales, como la compañia, la sucursal y el indicador
 	const { company, branch } = req.params;
+	//Format of input dats is {id, value, date, listInputDat}
 	const { inputDats } = req.body;
-	//Verif icar que la compañia, sucursal  y el indicador exista
+	//Verificar que la compañia, sucursal  y el indicador exista
 	const currentBranch = await Branch.findOne({ _id: branch });
 	if (!currentBranch)
 		return res.status(400).send({ message: "Branch not found" });
@@ -289,57 +288,104 @@ export const registerInputDatsMany = async (req, res) => {
 	const currentUser = req.user;
 	//Obtener el usuario
 	const user = await User.findOne({ _id: currentUser._id });
+	const session = await startSession();
 	try {
-		//Crear los input dats
-		//Obtener ultimo indice
-		const lastInputDat = await InputDat.findOne({
-			company,
-			branch,
-		}).sort({ index: -1 });
-		let index = lastInputDat ? lastInputDat.index : 0;
-		for (let inputDat of inputDats) {
-			inputDat.company = company;
-			inputDat.branch = branch;
-			inputDat.user = {
-				username: user.username,
-				email: user.email,
-				role: user.role,
-			};
-			//Validate the input dat values using schema validator of mongoose
-			await InputDat.validateNewInputDat(inputDat);
+		await session.withTransaction(async () => {
+			// Validate the input dats
+			for (let inputDat of inputDats) {
+				inputDat.user = {
+					username: user.username,
+					email: user.email,
+					role: user.role,
+				};
+				console.log("input dat", inputDat);
+				//If the id is provided then the input dat is already registered, so it will be updated
+				if (inputDat.id) {
+					await InputDat.validateUpdateInputDat(inputDat);
+					//Verify if the value is equal to the value of the input dat
+					const currentInputDat = await InputDat.findOne({
+						_id: inputDat.id,
+					}).session(session);
+					if (!currentInputDat)
+						throw new Error("Input data not found");
+					if (currentInputDat.value !== inputDat.value) {
+						currentInputDat.value = inputDat.value;
+						const savedInputDat = await currentInputDat.save({
+							session,
+						});
+						if (!savedInputDat)
+							throw new Error("Input data not updated");
+					}
+				} else {
+					//If the id is not provided then the input dat is new and will be registered
+					inputDat.company = company;
+					inputDat.branch = branch;
+					//Validate the input dat values using schema validator of mongoose
+					await InputDat.validateNewInputDat(inputDat);
+					const newInputDat = new InputDat({
+						_id: new Types.ObjectId(),
+						...inputDat,
+					});
+					//Havo to verify if the input dat is already registered in the month and year
+					const auxDate = new Date(inputDat.date);
+					console.log(
+						"🚀 ~ awaitsession.withTransaction ~ auxDate:",
+						auxDate
+					);
 
-			const existingInputDats = await InputDat.findOne({
-				name: inputDat.name,
-				branch,
-				company,
-			});
-			if (existingInputDats) {
-				const newInputDat = new InputDat({
-					_id: new Types.ObjectId(),
-					...inputDat,
-					index: existingInputDats.index,
-				});
-				console.log(
-					"🚀 ~ awaitsession.withTransaction ~ newInputDat:",
-					newInputDat
-				);
-				await newInputDat.save();
-			} else {
-				const newInputDat = new InputDat({
-					_id: new Types.ObjectId(),
-					...inputDat,
-					index: index + 1,
-				});
-				console.log(
-					"🚀 ~ awaitsession.withTransaction ~ newInputDat:",
-					newInputDat
-				);
+					const existingInputDat = await InputDat.findOne({
+						listInputDat: inputDat.listInputDat,
+						company,
+						branch,
+						date: {
+							$gte: new Date(
+								auxDate.getFullYear(),
+								auxDate.getMonth(),
+								1
+							),
+							$lt: new Date(
+								auxDate.getFullYear(),
+								auxDate.getMonth() + 1,
+								1
+							),
+						},
+					});
+					if (existingInputDat)
+						throw new Error(
+							"An InputDat with the same name and date already exists for this branch."
+						);
+					else {
+						const savedInputDat = await newInputDat.save({
+							session,
+						});
+						if (savedInputDat) {
+							//Logic to add new input dat to the branch
+							//Verify if the input dat is already in the branch
+							const existingListInputDat = await Branch.findOne({
+								_id: branch,
+								inputDats: inputDat.listInputDat,
+							}).session(session);
 
-				await newInputDat.save();
-				index++;
+							if (!existingListInputDat) {
+								currentBranch.inputDats.push(
+									inputDat.listInputDat
+								);
+								const response = await currentBranch.save({
+									session,
+								});
+								if (!response)
+									throw new Error(
+										"InputDat not saved in branch"
+									);
+							}
+						}
+					}
+				}
 			}
-		}
-		res.status(200).send({ message: "Input data saved" });
+		});
+		return res
+			.status(200)
+			.send({ message: "Inputs data added successfully" });
 	} catch (error) {
 		if (error.name === "ValidationError") {
 			return res.status(400).send({ message: error.message });
