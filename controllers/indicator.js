@@ -36,9 +36,7 @@ const getValue = (name, inputDatsValues, factors) => {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
-		console.log("factores", factors);
 		const factorValue = factors[0]["value"];
-		console.log("factorValue", factorValue);
 		const valorizado =
 			valores["generacionLodos"] +
 			valores["valCompostaje"] +
@@ -232,7 +230,7 @@ export const registerIndicator = async (req, res) => {
 		const {
 			name,
 			source,
-			categorie,
+			category,
 			sourceType,
 			description,
 			measurement,
@@ -243,18 +241,12 @@ export const registerIndicator = async (req, res) => {
 		const indicatorExist = await Indicator.findOne({ name });
 		if (indicatorExist)
 			return res.status(400).send({ message: "Indicator already exist" });
-		//*Como ya no se ocupara code, no se necesita guardar los datos de entrada
-		//*Por lo que no es necesario ser una operacion atomica
-		//?Solamente guardar el dato en el indicador
-		//Verificar si tiene la estructura requerida
-		for (const inputDat of inputDats) {
-			await InputDat.validateFirstInputDat(inputDat);
-		}
+
 		const newIndicator = new Indicator({
 			_id: new Types.ObjectId(),
 			name,
 			source,
-			categorie,
+			category,
 			sourceType,
 			description,
 			measurement,
@@ -280,7 +272,7 @@ export const updateIndicator = async (req, res) => {
 		const {
 			name,
 			source,
-			categorie,
+			category,
 			sourceType,
 			description,
 			measurement,

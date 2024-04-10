@@ -7,7 +7,7 @@ const IndicatorsSchema = new Schema(
 		name: { type: String, unique: true, required: true },
 		source: { type: String, required: true }, //Fuente de donde se obtiene el indicador (CTI, Circulytics)
 		//Definir como requerida la categoria
-		categorie: {
+		category: {
 			type: String,
 			required: true,
 			enum: ["Ambiental", "Social", "Economica"],
@@ -28,10 +28,10 @@ const IndicatorsSchema = new Schema(
 			{
 				type: Schema.Types.ObjectId,
 				ref: "ListInputDat",
+				norm: { type: String },
 			},
 		],
 		//Valores constantes que se utilizan en la formula
-		// !Este atributo varia segun procesos segun el excel
 		factors: [
 			{
 				name: { type: String },
@@ -74,10 +74,10 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
 			.label("Name")
 			.messages({ "string.empty": "Name is required" }),
 		source: Joi.string().label("Source"),
-		categorie: Joi.string()
+		category: Joi.string()
 			.required()
-			.label("Categorie")
-			.messages({ "string.empty": "Categorie is required" }),
+			.label("Category")
+			.messages({ "string.empty": "Category is required" }),
 		//Validate enum values of sourceType
 		sourceType: Joi.string()
 			.required()
@@ -120,7 +120,7 @@ IndicatorsSchema.statics.validateUpdateIndicators = async function (id) {
 	const Schema = Joi.object({
 		name: Joi.string().label("Name"),
 		source: Joi.string().label("Source"),
-		categorie: Joi.string().label("Categorie"),
+		category: Joi.string().label("Category"),
 		sourceType: Joi.string().label("Source type"),
 		description: Joi.string().label("Description"),
 		measurement: Joi.string().label("Measurement"),
