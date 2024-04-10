@@ -82,8 +82,9 @@ InputdatSchema.statics.validateUpdateInputDat = async function (id) {
 			.label("Value")
 			.messages({ "number.empty": "Value is required" }),
 		date: Joi.date().label("Date"),
+		listInputDat: Joi.objectId().label("List Input Dat"),
 		user: Joi.object({
-			name: Joi.string()
+			username: Joi.string()
 				.required()
 				.label("Name")
 				.messages({ "string.empty": "Name is required" }),
