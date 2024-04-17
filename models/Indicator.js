@@ -28,17 +28,16 @@ const IndicatorsSchema = new Schema(
 			{
 				type: Schema.Types.ObjectId,
 				ref: "ListInputDat",
-				norm: { type: String },
 			},
 		],
 		//Valores constantes que se utilizan en la formula
-		factors: [
-			{
-				name: { type: String },
-				value: { type: Number },
-				measurement: { type: String },
-			},
-		],
+		// factors: [
+		// 	{
+		// 		name: { type: String },
+		// 		value: { type: Number },
+		// 		measurement: { type: String },
+		// 	},
+		// ],
 	},
 	{ timestamps: true }
 );
@@ -92,26 +91,11 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
 			.messages({ "string.empty": "Source type is required" }),
 		description: Joi.string().label("Description"),
 		measurement: Joi.string().label("Measurement"),
-		inputDats: Joi.array()
-			.required()
-			.items(
-				Joi.object({
-					name: Joi.string().required().label("Name"),
-					measurement: Joi.string().required().label("Measurement"),
-					description: Joi.string().label("Description").allow(""),
-					norm: Joi.string().label("Norm").allow(""),
-				})
-			)
-			.label("Input data"),
-		factors: Joi.array()
-			.items(
-				Joi.object({
-					name: Joi.string().label("Name"),
-					value: Joi.number().label("Value"),
-					measurement: Joi.string().label("Measurement"),
-				})
-			)
-			.label("Factors"),
+		inputDats: Joi.array().items(
+			Joi.objectId().label("Input data").messages({
+				"string.empty": "Input data is required",
+			})
+		),
 	});
 	return Schema.validateAsync(id);
 };
@@ -126,21 +110,11 @@ IndicatorsSchema.statics.validateUpdateIndicators = async function (id) {
 		measurement: Joi.string().label("Measurement"),
 		inputDats: Joi.array()
 			.items(
-				Joi.object({
-					name: Joi.string().label("Name"),
-					measurement: Joi.string().label("Measurement"),
+				Joi.objectId().label("Input data").messages({
+					"string.empty": "Input data is required",
 				})
 			)
 			.label("Input data"),
-		factors: Joi.array()
-			.items(
-				Joi.object({
-					name: Joi.string().label("Name"),
-					value: Joi.number().label("Value"),
-					measurement: Joi.string().label("Measurement"),
-				})
-			)
-			.label("Factors"),
 	});
 	return Schema.validateAsync(id);
 };

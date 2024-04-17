@@ -1,14 +1,15 @@
 //Packages
-import { Types, startSession } from "mongoose";
+import { Types } from "mongoose";
 
 //Models
 import Indicator from "../models/Indicator.js";
 import Branch from "../models/Branch.js";
 import InputDat from "../models/InputDat.js";
-import User from "../models/User.js";
+import ListInputDat from "../models/ListInputDat.js";
 
 //Functions
-const getValue = (name, inputDatsValues, factors) => {
+const getValue = (name, inputDatsValues) => {
+	console.log("🚀 ~ getValue ~ inputDatsValues:", inputDatsValues);
 	//El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
 	if (name === "porcentaje de valorización ciclo biológico") {
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
@@ -36,7 +37,7 @@ const getValue = (name, inputDatsValues, factors) => {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
-		const factorValue = factors[0]["value"];
+		const factorValue = 0;
 		const valorizado =
 			valores["generacionLodos"] +
 			valores["valCompostaje"] +
@@ -79,6 +80,26 @@ const getValue = (name, inputDatsValues, factors) => {
 			(valores["valPec"] * 100) /
 			((valores["entradaResiduos"] * factorValue) / 100);
 		return porcentajeTecnico;
+	} else if (name === "Porcentaje circularidad de salida") {
+		const valores = {
+			generacionLodos: 0,
+			salidaCompostaje: 0,
+			salidaMasas: 0,
+			salidaBiodigestion: 0,
+			salidaRiles: 0,
+			salidaResiduosMunicipales: 0,
+			salidaCartonPapel: 0,
+		};
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "entrada residuos") {
+				valores["entradaResiduos"] += inputDat.value;
+			} else if (inputDat.name === "salida residuos") {
+				valores["salidaResiduos"] += inputDat.value;
+			}
+		});
+		valores["porcentajeCircularidad"] =
+			(valores["salidaResiduos"] * 100) / valores["entradaResiduos"];
+		return valores["porcentajeCircularidad"];
 	}
 };
 
@@ -104,12 +125,30 @@ const monthNumberToName = (monthNumber) => {
 
 export const getIndicators = async (req, res) => {
 	try {
-		const indicators = await Indicator.find();
-		if (!indicators)
-			return res.status(400).send({ message: "Indicators not found" });
-		return res.status(200).send({ indicators });
+		if (req.params.branch) {
+			const branch = await Branch.findById(req.params.branch);
+			if (!branch)
+				return res.status(400).send({ message: "Branch not found" });
+			const indicators = await Indicator.find();
+			if (!indicators)
+				return res
+					.status(400)
+					.send({ message: "Indicators not found" });
+			const branchIndicators = indicators.filter((indicator) =>
+				indicator.inputDats.some((inputDat) =>
+					branch.inputDats.includes(inputDat)
+				)
+			);
+			return res.status(200).send({ indicators: branchIndicators });
+		} else {
+			const indicators = await Indicator.find();
+			if (!indicators)
+				return res
+					.status(400)
+					.send({ message: "Indicators not found" });
+			return res.status(200).send({ indicators });
+		}
 	} catch (error) {
-		console.log("error", error);
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
@@ -127,9 +166,12 @@ export const getIndicatorValue = async (req, res) => {
 		const branchExist = await Branch.findById(branch);
 		if (!branchExist)
 			return res.status(400).send({ message: "Branch not found" });
-		const inputDatIndexes = branchExist.inputDats.map(
-			(inputDat) => inputDat.index
+
+		//Create and array with the listInputDat indexes from the indicator
+		const listInputDatsIndexes = currentIndicator.inputDats.map(
+			(inputDat) => inputDat._id
 		);
+
 		const year = req.params.year;
 		//Si no se indica el mes, se obtendra el valor del año
 		let month = req.params.month;
@@ -153,12 +195,12 @@ export const getIndicatorValue = async (req, res) => {
 				const inputDatValues = await InputDat.aggregate([
 					{
 						$match: {
-							index: { $in: inputDatIndexes },
 							date: {
 								$gte: startDate,
 								$lte: endDate,
 							},
 							branch: branchExist._id,
+							listInputDat: { $in: listInputDatsIndexes },
 						},
 					},
 				]);
@@ -166,17 +208,16 @@ export const getIndicatorValue = async (req, res) => {
 					"🚀 ~ getIndicatorValue ~ inputDatValues:",
 					inputDatValues
 				);
-
 				//Si no se encuentran valores, se retorna el valor por defecto
 				if (inputDatValues.length === 0) {
 					monthValues.push(monthValue);
 					continue;
 				} else {
-					//Si se encuentran valores, se calcula el valor del indicador
+					//Populate the info of inputDatValues
+
 					const value = getValue(
 						currentIndicator.name,
-						inputDatValues,
-						currentIndicator.factors
+						inputDatValues
 					);
 					monthValue.value = value;
 					monthValues.push(monthValue);
@@ -194,7 +235,7 @@ export const getIndicatorValue = async (req, res) => {
 			const inputDatsValues = await InputDat.aggregate([
 				{
 					$match: {
-						index: { $in: inputDatIndexes },
+						listInputDat: { $in: listInputDatsIndexes },
 						date: {
 							$gte: startDate,
 							$lte: endDate,
@@ -216,7 +257,6 @@ export const getIndicatorValue = async (req, res) => {
 			}
 		}
 	} catch (error) {
-		console.log("error", error);
 		if (error.isJoi)
 			return res.status(400).send({ message: error.details[0].message });
 		res.status(500).send({ message: "Internal Server Error" });
@@ -235,13 +275,22 @@ export const registerIndicator = async (req, res) => {
 			description,
 			measurement,
 			inputDats,
-			factors,
 		} = req.body;
 		//Have to check if the indicator exist
-		const indicatorExist = await Indicator.findOne({ name });
+		const indicatorExist = await Indicator.findOne({ name: name });
 		if (indicatorExist)
 			return res.status(400).send({ message: "Indicator already exist" });
 
+		//Have to verify the reference of the input dats if they exist
+		if (inputDats) {
+			for (const inputDat of inputDats) {
+				const inputDatExist = await ListInputDat.findById(inputDat);
+				if (!inputDatExist)
+					return res
+						.status(400)
+						.send({ message: "InputDat not found" });
+			}
+		}
 		const newIndicator = new Indicator({
 			_id: new Types.ObjectId(),
 			name,
@@ -251,7 +300,6 @@ export const registerIndicator = async (req, res) => {
 			description,
 			measurement,
 			inputDats,
-			factors,
 		});
 		const result = await newIndicator.save();
 		if (!result)
@@ -261,6 +309,9 @@ export const registerIndicator = async (req, res) => {
 		return res.status(200).send({ message: "Indicator registered" });
 	} catch (error) {
 		console.log("error", error);
+		if (error.name === "ValidationError") {
+			return res.status(400).send({ message: error.message });
+		}
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
