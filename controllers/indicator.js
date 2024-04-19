@@ -9,77 +9,100 @@ import ListInputDat from "../models/ListInputDat.js";
 
 //Functions
 const getValue = (name, inputDatsValues) => {
-	console.log("🚀 ~ getValue ~ inputDatsValues:", inputDatsValues);
 	//El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
-	if (name === "porcentaje de valorización ciclo biológico") {
+	if (name === "Porcentaje de valorización ciclo biológico") {
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
 		const valores = {
 			generacionLodos: 0,
-			valCompostaje: 0,
-			valMasa: 0,
-			valBiodigestion: 0,
-			valTratamientoRiles: 0,
-			entradaMunicipal: 0,
-			potencialValorizacion: 0,
+			salidaCompostaje: 0,
+			salidaMasas: 0,
+			salidaBiodigestion: 0,
+			salidaRiles: 0,
+			salidaResiduosMunicipales: 0,
 		};
 		inputDatsValues.forEach((inputDat) => {
-			if (inputDat.name === "generación de lodo") {
+			if (inputDat.name === "Salida compostaje de lodo generado") {
 				valores["generacionLodos"] = inputDat.value;
-			} else if (inputDat.name === "valorización compostaje") {
+			} else if (inputDat.name === "Salida compostaje") {
 				valores["valCompostaje"] = inputDat.value;
-			} else if (inputDat.name === "valorización masas") {
+			} else if (inputDat.name === "Salida masas") {
 				valores["valMasa"] = inputDat.value;
-			} else if (inputDat.name === "valorización biodigestión") {
+			} else if (inputDat.name === "Salida biodigestión") {
 				valores["valBiodigestion"] = inputDat.value;
-			} else if (inputDat.name === "valorización planta de riles") {
+			} else if (inputDat.name === "Salida RILES tratados") {
 				valores["valTratamientoRiles"] = inputDat.value;
-			} else if (inputDat.name === "entrada residuos municipales") {
+			} else if (inputDat.name === "Salida residuos municipales") {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
-		const factorValue = 0;
-		const valorizado =
+		const numerador =
 			valores["generacionLodos"] +
-			valores["valCompostaje"] +
-			valores["valMasa"] +
-			valores["valBiodigestion"] +
-			valores["valTratamientoRiles"];
-		//Condicion si maneja entradas municipales o no
-		if (valores["entradaMunicipal"] > 0) {
-			valores["potencialValorizacion"] =
-				valores["entradaMunicipal"] * factorValue + valorizado;
-		} else {
-			valores["potencialValorizacion"] = valorizado;
-		}
-		const valorizacionCicloBiologico =
-			valorizado / valores["potencialValorizacion"];
-		return valorizacionCicloBiologico * 100;
-	} else if (name === "porcentaje de valorización ciclo técnico") {
-		let factorValue = 0;
+			valores["salidaCompostaje"] +
+			valores["salidaMasas"] +
+			valores["salidaBiodigestion"] +
+			valores["salidaRiles"];
+		const denominador =
+			numerador + valores["salidaResiduosMunicipales"] * 0.6;
+		return numerador / denominador;
+	} else if (name === "Porcentaje de valorización ciclo técnico") {
 		const valores = {
-			entradaResiduos: 0,
-			valPec: 0,
-			potencialValorizacion: 0,
+			generacionLodos: 0,
+			entradaMunicipal: 0,
+			salidaPlastico: 0,
+			salidaChatarraFerrosa: 0,
+			salidaAluminio: 0,
+			salidaTetrapack: 0,
+			salidaIncineracionBiomasa: 0,
+			salidaReutilizacion: 0,
+			salidaPeligrosos: 0,
+			salidaInerte: 0,
+			entradaCircularAgua: 0,
 		};
 		inputDatsValues.forEach((inputDat) => {
-			if (inputDat.name === "entrada residuos") {
-				valores["entradaResiduos"] += inputDat.value;
-			} else if (inputDat.name === "val pec") {
-				valores["valPec"] += inputDat.value;
-			} else if (
-				inputDat.name === "potencial valorizacion ciclo tecnico"
-			) {
-				valores["potencialValorizacion"] += inputDat.value;
+			if (inputDat.name === "Salida residuos municipales") {
+				valores["entradaMunicipal"] = inputDat.value;
+			} else if (inputDat.name === "Salida Plástico") {
+				valores["salidaPlastico"] = inputDat.value;
+			} else if (inputDat.name === "Salida chatarra ferrosa") {
+				valores["salidaChatarraFerrosa"] = inputDat.value;
+			} else if (inputDat.name === "Salida aluminio") {
+				valores["salidaAluminio"] = inputDat.value;
+			} else if (inputDat.name === "Salida tetrapack") {
+				valores["salidaTetrapack"] = inputDat.value;
+			} else if (inputDat.name === "Salida Incineración de biomasa") {
+				valores["salidaIncineracionBiomasa"] = inputDat.value;
+			} else if (inputDat.name === "Salida reutilización") {
+				valores["salidaReutilizacion"] = inputDat.value;
+			} else if (inputDat.name === "Salida peligrosos") {
+				valores["salidaPeligrosos"] = inputDat.value;
+			} else if (inputDat.name === "Salida inerte") {
+				valores["salidaInerte"] = inputDat.value;
+			} else if (inputDat.name === "Entrada circular agua") {
+				valores["entradaCircularAgua"] = inputDat.value;
+			} else if (inputDat.name === "Salida compostaje de lodo generado") {
+				valores["generacionLodos"] = inputDat.value;
 			}
 		});
 		//Retornar el valor junto con el factor
-		factorValue =
-			(valores["potencialValorizacion"] * 100) /
-			valores["entradaResiduos"];
-		const porcentajeTecnico =
-			(valores["valPec"] * 100) /
-			((valores["entradaResiduos"] * factorValue) / 100);
-		return porcentajeTecnico;
+		const numerador =
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaPlastico"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaIncineracionBiomasa"] +
+			valores["salidaPeligrosos"];
+		const denominador =
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaPlastico"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaReutilizacion"] +
+			valores["salidaPeligrosos"] +
+			valores["salidaInerte"] +
+			valores["entradaMunicipal"] * 0.6 +
+			valores["entradaMunicipal"] *
+				(valores["generacionLodos"] - valores["entradaCircularAgua"]);
+		return numerador / denominador;
 	} else if (name === "Porcentaje circularidad de salida") {
 		const valores = {
 			generacionLodos: 0,
@@ -89,17 +112,82 @@ const getValue = (name, inputDatsValues) => {
 			salidaRiles: 0,
 			salidaResiduosMunicipales: 0,
 			salidaCartonPapel: 0,
+			salidaPlastico: 0,
+			salidaChatarraFerrosa: 0,
+			salidaAluminio: 0,
+			salidaTetrapack: 0,
+			salidaIncineracionBiomasa: 0,
+			salidaCoproceso: 0,
+			salidaReutilizacion: 0,
+			salidaPeligrosos: 0,
+			salidaInerte: 0,
 		};
 		inputDatsValues.forEach((inputDat) => {
-			if (inputDat.name === "entrada residuos") {
-				valores["entradaResiduos"] += inputDat.value;
-			} else if (inputDat.name === "salida residuos") {
+			if (inputDat.name === "Salida compostaje de lodo generado") {
+				valores["generacionLodos"] += inputDat.value;
+			} else if (inputDat.name === "Salida compostaje") {
 				valores["salidaResiduos"] += inputDat.value;
+			} else if (inputDat.name === "Salida masas") {
+				valores["salidaMasas"] += inputDat.value;
+			} else if (inputDat.name === "Salida biodigestión") {
+				valores["salidaBiodigestion"] += inputDat.value;
+			} else if (inputDat.name === "Salida RILES tratados") {
+				valores["salidaRiles"] += inputDat.value;
+			} else if (inputDat.name === "Salida residuos municipales") {
+				valores["salidaResiduosMunicipales"] += inputDat.value * 0.6;
+			} else if (inputDat.name === "Salida Cartón/Papel") {
+				valores["salidaCartonPapel"] += inputDat.value;
+			} else if (inputDat.name === "Salida Plástico") {
+				valores["salidaPlastico"] += inputDat.value;
+			} else if (inputDat.name === "Salida chatarra ferrosa") {
+				valores["salidaChatarraFerrosa"] += inputDat.value;
+			} else if (inputDat.name === "Salida aluminio") {
+				valores["salidaAluminio"] += inputDat.value;
+			} else if (inputDat.name === "Salida tetrapack") {
+				valores["salidaTetrapack"] += inputDat.value;
+			} else if (inputDat.name === "Salida Incineración de biomasa") {
+				valores["salidaIncineracionBiomasa"] += inputDat.value;
+			} else if (inputDat.name === "Salida coproceso") {
+				valores["salidaCoproceso"] += inputDat.value;
+			} else if (inputDat.name === "Salida reutilización") {
+				valores["salidaReutilizacion"] += inputDat.value;
+			} else if (inputDat.name === "Salida peligrosos") {
+				valores["salidaPeligrosos"] += inputDat.value;
+			} else if (inputDat.name === "Salida inerte") {
+				valores["salidaInerte"] += inputDat.value;
 			}
 		});
-		valores["porcentajeCircularidad"] =
-			(valores["salidaResiduos"] * 100) / valores["entradaResiduos"];
-		return valores["porcentajeCircularidad"];
+		console.log("valores", valores);
+		const numerador =
+			valores["generacionLodos"] +
+			valores["salidaCompostaje"] +
+			valores["salidaMasas"] +
+			valores["salidaBiodigestion"] +
+			valores["salidaRiles"] +
+			valores["salidaCartonPapel"] +
+			valores["salidaPlastico"] +
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaReutilizacion"];
+		const denominador =
+			valores["generacionLodos"] +
+			valores["salidaCompostaje"] +
+			valores["salidaMasas"] +
+			valores["salidaBiodigestion"] +
+			valores["salidaRiles"] +
+			valores["salidaResiduosMunicipales"] +
+			valores["salidaCartonPapel"] +
+			valores["salidaPlastico"] +
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaIncineracionBiomasa"] +
+			valores["salidaCoproceso"] +
+			valores["salidaReutilizacion"] +
+			valores["salidaPeligrosos"] +
+			valores["salidaInerte"];
+		return numerador / denominador;
 	}
 };
 
@@ -192,7 +280,7 @@ export const getIndicatorValue = async (req, res) => {
 					value: -1,
 				};
 				//Obtener los valores de los input dats usando el id del indicador y la sucursal
-				const inputDatValues = await InputDat.aggregate([
+				let inputDatValues = await InputDat.aggregate([
 					{
 						$match: {
 							date: {
@@ -201,6 +289,30 @@ export const getIndicatorValue = async (req, res) => {
 							},
 							branch: branchExist._id,
 							listInputDat: { $in: listInputDatsIndexes },
+						},
+					},
+					{
+						$lookup: {
+							from: "listinputdats",
+							localField: "listInputDat",
+							foreignField: "_id",
+							as: "listInputDatDetails",
+						},
+					},
+					{
+						$unwind: {
+							path: "$listInputDatDetails",
+							preserveNullAndEmptyArrays: true, // Conservar los documentos incluso si no hay correspondencia en el lookup.
+						},
+					},
+					{
+						$addFields: {
+							name: "$listInputDatDetails.name",
+						},
+					},
+					{
+						$project: {
+							listInputDatDetails: 0,
 						},
 					},
 				]);
@@ -213,8 +325,6 @@ export const getIndicatorValue = async (req, res) => {
 					monthValues.push(monthValue);
 					continue;
 				} else {
-					//Populate the info of inputDatValues
-
 					const value = getValue(
 						currentIndicator.name,
 						inputDatValues
@@ -231,7 +341,6 @@ export const getIndicatorValue = async (req, res) => {
 			const startDate = new Date(year, month - 1, 1, 0, 0, 0, 0);
 			const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 			//Obtener los valores de los input dats
-			const inputDats = currentIndicator.inputDats;
 			const inputDatsValues = await InputDat.aggregate([
 				{
 					$match: {
@@ -243,16 +352,36 @@ export const getIndicatorValue = async (req, res) => {
 						branch: branchExist._id,
 					},
 				},
+				{
+					$lookup: {
+						from: "listinputdats",
+						localField: "listInputDat",
+						foreignField: "_id",
+						as: "listInputDatDetails",
+					},
+				},
+				{
+					$unwind: {
+						path: "$listInputDatDetails",
+						preserveNullAndEmptyArrays: true, // Conservar los documentos incluso si no hay correspondencia en el lookup.
+					},
+				},
+				{
+					$addFields: {
+						name: "$listInputDatDetails.name",
+					},
+				},
+				{
+					$project: {
+						listInputDatDetails: 0,
+					},
+				},
 			]);
 			//Obtener valor
 			if (inputDatsValues.length === 0) {
 				return res.status(200).send({ value: -1 });
 			} else {
-				const value = getValue(
-					currentIndicator.name,
-					inputDatsValues,
-					currentIndicator.factors
-				);
+				const value = getValue(currentIndicator.name, inputDatsValues);
 				return res.status(200).send({ value });
 			}
 		}
