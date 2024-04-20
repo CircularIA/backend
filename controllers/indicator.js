@@ -9,8 +9,10 @@ import ListInputDat from "../models/ListInputDat.js";
 
 //Functions
 const getValue = (name, inputDatsValues) => {
+	console.log("name", name);
 	//El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
-	if (name === "Porcentaje de valorización ciclo biológico") {
+	if (name === "Porcentaje valorización ciclo biológico") {
+		console.log("entro a calcular el ciclo biologico");
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
 		const valores = {
 			generacionLodos: 0,
@@ -157,7 +159,6 @@ const getValue = (name, inputDatsValues) => {
 				valores["salidaInerte"] += inputDat.value;
 			}
 		});
-		console.log("valores", valores);
 		const numerador =
 			valores["generacionLodos"] +
 			valores["salidaCompostaje"] +
@@ -188,6 +189,44 @@ const getValue = (name, inputDatsValues) => {
 			valores["salidaPeligrosos"] +
 			valores["salidaInerte"];
 		return numerador / denominador;
+	} else if (name === "Porcentaje desviación de relleno") {
+		const valores = {
+			generacionLodos: 0,
+			salidaCompostaje: 0,
+			salidaMasas: 0,
+			salidaBiodigestion: 0,
+			salidaRiles: 0,
+			salidaResiduosMunicipales: 0,
+			salidaCartonPapel: 0,
+			salidaPlastico: 0,
+			salidaChatarraFerrosa: 0,
+			salidaAluminio: 0,
+			salidaTetrapack: 0,
+			salidaIncineracionBiomasa: 0,
+			salidaCoproceso: 0,
+			salidaReutilizacion: 0,
+			salidaPeligrosos: 0,
+			salidaInerte: 0,
+		};
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Salida compostaje de lodo generado") {
+				valores["generacionLodos"] += inputDat.value;
+			} else if (inputDat.name === "Salida compostaje") {
+				valores["salidaResiduos"] += inputDat.value;
+			} else if (inputDat.name === "Salida masas") {
+				valores["salidaMasas"] += inputDat.value;
+			} else if (inputDat.name === "Salida biodigestión") {
+				valores["salidaBiodigestion"] += inputDat.value;
+			} else if (inputDat.name === "Salida RILES tratados") {
+				valores["salidaRiles"] += inputDat.value;
+			} else if (inputDat.name === "Salida residuos municipales") {
+				valores["salidaResiduosMunicipales"] += inputDat.value * 0.6;
+			} else if (inputDat.name === "Salida Cartón/Papel") {
+				valores["salidaCartonPapel"] += inputDat.value;
+			} else if (inputDat.name === "Salida Plástico") {
+				valores["salidaPlastico"] += inputDat.value;
+			}
+		});
 	}
 };
 
