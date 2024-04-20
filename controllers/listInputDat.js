@@ -24,8 +24,16 @@ export const createListInputDat = async (req, res) => {
 	try {
 		//Validate the data
 		await ListInputDat.validateNewInputDat(req.body);
-
 		const listInputDat = req.body;
+		//Have to verify if the list input dat already exist
+		const listInputDatExist = await ListInputDat.findOne({
+			name: listInputDat.name,
+		});
+		if (listInputDatExist) {
+			return res
+				.status(409)
+				.json({ message: "List Input Dat already exist" });
+		}
 		let newListInputDat = new ListInputDat(listInputDat);
 		newListInputDat._id = new mongoose.Types.ObjectId();
 		await newListInputDat.save();

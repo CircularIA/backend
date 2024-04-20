@@ -18,6 +18,12 @@ const ListInputDatSchema = new Schema({
 			type: { type: String },
 		},
 	],
+	ecoequivalence: {
+		co2: { type: Number, default: 0 },
+		agua: { type: Number, default: 0 },
+		arboles: { type: Number, default: 0 },
+		energia: { type: Number, default: 0 },
+	},
 	subcategory: {
 		type: String,
 		required: true,
