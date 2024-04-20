@@ -9,10 +9,8 @@ import ListInputDat from "../models/ListInputDat.js";
 
 //Functions
 const getValue = (name, inputDatsValues) => {
-	console.log("name", name);
 	//El objetivo de esta funcion es obtener el valor de un indicador con los valores de los input dats
 	if (name === "Porcentaje valorización ciclo biológico") {
-		console.log("entro a calcular el ciclo biologico");
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
 		const valores = {
 			generacionLodos: 0,
@@ -104,6 +102,7 @@ const getValue = (name, inputDatsValues) => {
 			valores["entradaMunicipal"] * 0.6 +
 			valores["entradaMunicipal"] *
 				(valores["generacionLodos"] - valores["entradaCircularAgua"]);
+
 		return numerador / denominador;
 	} else if (name === "Porcentaje circularidad de salida") {
 		const valores = {
