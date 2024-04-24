@@ -18,7 +18,7 @@ const getValue = (name, inputDatsValues) => {
 			salidaMasas: 0,
 			salidaBiodigestion: 0,
 			salidaRiles: 0,
-			salidaResiduosMunicipales: 0,
+			entradaMunicipal: 0,
 		};
 		inputDatsValues.forEach((inputDat) => {
 			if (inputDat.name === "Salida compostaje de lodo generado") {
@@ -35,14 +35,16 @@ const getValue = (name, inputDatsValues) => {
 				valores["entradaMunicipal"] = inputDat.value;
 			}
 		});
+		console.log("valores", valores);
 		const numerador =
 			valores["generacionLodos"] +
 			valores["salidaCompostaje"] +
 			valores["salidaMasas"] +
 			valores["salidaBiodigestion"] +
 			valores["salidaRiles"];
-		const denominador =
-			numerador + valores["salidaResiduosMunicipales"] * 0.6;
+		const denominador = numerador + valores["entradaMunicipal"] * 0.6;
+		console.log("numerador", numerador);
+		console.log("denominador", denominador);
 		return numerador / denominador;
 	} else if (name === "Porcentaje de valorización ciclo técnico") {
 		const valores = {
@@ -83,6 +85,7 @@ const getValue = (name, inputDatsValues) => {
 				valores["generacionLodos"] = inputDat.value;
 			}
 		});
+		console.log("valores", valores);
 		//Retornar el valor junto con el factor
 		const numerador =
 			valores["salidaChatarraFerrosa"] +
@@ -224,8 +227,57 @@ const getValue = (name, inputDatsValues) => {
 				valores["salidaCartonPapel"] += inputDat.value;
 			} else if (inputDat.name === "Salida Plástico") {
 				valores["salidaPlastico"] += inputDat.value;
+			} else if (inputDat.name === "Salida chatarra ferrosa") {
+				valores["salidaChatarraFerrosa"] += inputDat.value;
+			} else if (inputDat.name === "Salida aluminio") {
+				valores["salidaAluminio"] += inputDat.value;
+			} else if (inputDat.name === "Salida tetrapack") {
+				valores["salidaTetrapack"] += inputDat.value;
+			} else if (inputDat.name === "Salida Incineración de biomasa") {
+				valores["salidaIncineracionBiomasa"] += inputDat.value;
+			} else if (inputDat.name === "Salida coproceso") {
+				valores["salidaCoproceso"] += inputDat.value;
+			} else if (inputDat.name === "Salida reutilización") {
+				valores["salidaReutilizacion"] += inputDat.value;
+			} else if (inputDat.name === "Salida peligrosos") {
+				valores["salidaPeligrosos"] += inputDat.value;
+			} else if (inputDat.name === "Salida inerte") {
+				valores["salidaInerte"] += inputDat.value;
 			}
 		});
+		const numerador =
+			valores["generacionLodos"] +
+			valores["salidaCompostaje"] +
+			valores["salidaMasas"] +
+			valores["salidaBiodigestion"] +
+			valores["salidaRiles"] +
+			valores["salidaCartonPapel"] +
+			valores["salidaPlastico"] +
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaIncineracionBiomasa"] +
+			valores["salidaCoproceso"] +
+			valores["salidaReutilizacion"];
+		const denominador =
+			valores["generacionLodos"] +
+			valores["salidaCompostaje"] +
+			valores["salidaMasas"] +
+			valores["salidaBiodigestion"] +
+			valores["salidaRiles"] +
+			valores["salidaResiduosMunicipales"] +
+			valores["salidaCartonPapel"] +
+			valores["salidaPlastico"] +
+			valores["salidaChatarraFerrosa"] +
+			valores["salidaAluminio"] +
+			valores["salidaTetrapack"] +
+			valores["salidaIncineracionBiomasa"] +
+			valores["salidaCoproceso"] +
+			valores["salidaReutilizacion"] +
+			valores["salidaPeligrosos"] +
+			valores["salidaInerte"];
+
+		return numerador / denominador;
 	}
 };
 
