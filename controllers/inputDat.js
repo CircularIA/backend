@@ -73,6 +73,7 @@ export const getInputDatsByIndicator = async (req, res) => {
 		const currentBranch = await Branch.findById(branch);
 		if (!currentBranch)
 			return res.status(400).send({ message: "Branch not found" });
+		console.log("currentBranch", currentBranch);
 		const indicatorExist = currentBranch.indicators.find(
 			(item) =>
 				item.indicator.toString() === currentIndicator._id.toString()

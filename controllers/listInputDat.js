@@ -1,6 +1,7 @@
 //Models
 import Branch from "../models/Branch.js";
 import ListInputDat from "../models/ListInputDat.js";
+import Indicator from "../models/Indicator.js";
 import mongoose from "mongoose";
 
 export const getListInputDats = async (req, res) => {
@@ -79,3 +80,23 @@ export const deleteListInputDat = async (req, res) => {
 		res.status(400).json({ message: error.message });
 	}
 };
+
+export const getListInputDatsByIndicator = async (req, res) => {
+	try {
+		const { indicatorId } = req.params;
+		console.log(indicatorId)
+		// Find indicator in indicators collection
+		const indicator = await Indicator.findById(indicatorId);
+		console.log(indicator)
+		if (!indicator)
+			return res.status(400).send({ message: "Indicator not found" });
+		/* indicator have "inputDats" field, array of listInputDats _id´s, populate with listInputDat collection */
+		const listInputDats = await ListInputDat.find({
+			_id: { $in: indicator.inputDats },
+		});
+		console.log(listInputDats.length)
+		res.status(200).json(listInputDats);
+	} catch (error) {
+		res.status(400).json({ message: error.message });
+	}
+}

@@ -20,6 +20,9 @@ const IndicatorsSchema = new Schema(
 				"Energía",
 				"Agua",
 				"Cadena de suministros",
+				"Ingreso",
+				"Egreso",
+				"Social"
 			],
 		}, //Tipo de fuente (valorización de residuos, emisiones, energía, agua, cadena de suministros)
 		description: { type: String }, //Descripcion del indicador
@@ -85,7 +88,10 @@ IndicatorsSchema.statics.validateIndicators = async function (id) {
 				"Emisiones",
 				"Energía",
 				"Agua",
-				"Cadena de suministros"
+				"Cadena de suministros",
+				"Ingreso",
+				"Egreso",
+				"Social"
 			)
 			.label("Source type")
 			.messages({ "string.empty": "Source type is required" }),

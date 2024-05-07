@@ -10,11 +10,13 @@ import {
 	createListInputDat,
 	updateListInputDat,
 	deleteListInputDat,
+	getListInputDatsByIndicator,
 } from "../controllers/listInputDat.js";
 
 router.get("/:branch?", verifyToken, getListInputDats);
 router.post("/", verifyToken, createListInputDat);
 router.patch("/:id", verifyToken, updateListInputDat);
 router.delete("/:id", verifyToken, deleteListInputDat);
+router.get("/indicator/:indicatorId", verifyToken, getListInputDatsByIndicator);
 
 export default router;
