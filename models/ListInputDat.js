@@ -41,6 +41,8 @@ const ListInputDatSchema = new Schema({
 			"Educación ambiental interna",
 			"Porcentaje de participación femenina",
 			"Social explícito",
+			"Número de accidentes en un periodo",
+			"Número de sinergia industrial"
 		],
 	},
 });

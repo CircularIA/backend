@@ -11,6 +11,7 @@ import authRoutes from "./routes/auth.js";
 import indicatorRoutes from "./routes/indicator.js";
 import inputDatRoutes from "./routes/inputDats.js";
 import listInputDatRoutes from "./routes/listInputDats.js";
+import userSelectionsRoutes from "./routes/userSelections.js";
 import mailRoutes from "./routes/mail.js";
 
 //Define the environment
@@ -44,6 +45,7 @@ app.use("/branch", branchRoutes);
 app.use("/indicator", indicatorRoutes);
 app.use("/inputDat", inputDatRoutes);
 app.use("/listInputDat", listInputDatRoutes);
+app.use("/userSelections", userSelectionsRoutes);
 
 // Connect to database
 connectDB();
