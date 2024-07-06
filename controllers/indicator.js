@@ -278,6 +278,264 @@ const getValue = (name, inputDatsValues) => {
 			valores["salidaInerte"];
 
 		return numerador / denominador;
+	} else if (name === "Intensidad de agua") {
+		const valores = {
+			entradaAguaTotal: 0,
+			empleadosTotales: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada agua total") {
+				valores["entradaAguaTotal"] = inputDat.value;
+			}
+			if (inputDat.name === "Empleados totales") {
+				valores["empleadosTotales"] = inputDat.value;
+			}
+		})
+
+		return valores["entradaAguaTotal"] / valores["empleadosTotales"];
+
+	} else if (name === "Porcentaje circularidad agua de entrada") {
+		const valores = {
+			entradaAguaTotal: 0,
+			entradaCircularMar: 0,
+			entradaCircularSuperficial: 0,
+			entradaCircularRegenerada: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada agua total") {
+				valores["entradaAguaTotal"] = inputDat.value;
+			}
+			if (inputDat.name === "Entada circular de agua de mar") {
+				valores["entradaCircularMar"] = inputDat.value;
+			}
+			if (inputDat.name === "Entrada circular agua superficial y pozos de agua subterránea") {
+				valores["entradaCircularSuperficial"] = inputDat.value;
+			}
+			if (inputDat.name === "Entrada circular  de agua regenerada") {
+				valores["entradaCircularRegenerada"] = inputDat.value;
+			}
+		})
+
+		const numerador = valores["entradaCircularMar"] + valores["entradaCircularSuperficial"] + valores["entradaCircularRegenerada"];
+		const denominador = valores["entradaAguaTotal"];
+
+		return numerador / denominador;
+
+	} else if (name === "Porcentaje circularidad agua de salida") {
+		const valores = {
+			salidaCircular: 0,
+			salidaLinealConsumo: 0,
+			salidaLinealEvaporacion: 0,
+			salidaLinealResiduoAgua: 0,
+			salidaLinealExportacion: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Salida de agua circular") {
+				valores["salidaCircular"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida de agua lineal por consumo") {
+				valores["salidaLinealConsumo"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida agua lineal por evaporación") {
+				valores["salidaLinealEvaporacion"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida agua lineal por residuo de agua") {
+				valores["salidaLinealResiduoAgua"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida agua lineal por exportación de agua") {
+				valores["salidaLinealExportacion"] = inputDat.value;
+			}
+		})
+
+		const numerador = valores["salidaCircular"];
+		const denominador = valores["salidaCircular"] + valores["salidaLinealConsumo"] + valores["salidaLinealEvaporacion"] + valores["salidaLinealResiduoAgua"] + valores["salidaLinealExportacion"];
+
+		return numerador / denominador;
+	} else if (name === "Porcentaje de energía renovable") {
+		const valores = {
+			entradaCombustibleCarbon: 0,
+			entradaCombustibleDiesel: 0,
+			entradaCombustiblePetroleo: 0,
+			entradaCombustibleGas: 0,
+			entradaCombustibleGasLicuado: 0,
+			entradaCombustibleGasolina: 0,
+			entradaElectricidad: 0,
+			entradaOtrosCombustibles: 0,
+			entradaCombustibleFuenteRenovable: 0,
+			entradaElectricidadFuenteRenovable: 0,
+			entradaEnergiaAutogeneradaRenovable: 0,
+		}
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada combustible carbón") {
+				valores["entradaCombustibleCarbon"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 2 (Diesel)") {
+				valores["entradaCombustibleDiesel"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 6") {
+				valores["entradaCombustiblePetroleo"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas natural") {
+				valores["entradaCombustibleGas"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas licuado petroleo (GLP)") {
+				valores["entradaCombustibleGasLicuado"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible Gasolina") {
+				valores["entradaCombustibleGasolina"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad, calor, vapor, refrigeración") {
+				valores["entradaElectricidad"] = inputDat.value;
+			} else if (inputDat.name === "Entrada otros combustibles no renovables") {
+				valores["entradaOtrosCombustibles"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible fuente renovables") {
+				valores["entradaCombustibleFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad fuente renovable") {
+				valores["entradaElectricidadFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada energía autogenerada renovable") {
+				valores["entradaEnergiaAutogeneradaRenovable"] = inputDat.value;
+			}
+		})
+
+		const numerador =
+			valores["entradaCombustibleFuenteRenovable"] +
+			valores["entradaElectricidadFuenteRenovable"] +
+			valores["entradaEnergiaAutogeneradaRenovable"];
+
+		const denominador =
+			valores["entradaCombustibleCarbon"] +
+			valores["entradaCombustibleDiesel"] +
+			valores["entradaCombustiblePetroleo"] +
+			valores["entradaCombustibleGas"] +
+			valores["entradaCombustibleGasLicuado"] +
+			valores["entradaCombustibleGasolina"] +
+			valores["entradaElectricidad"] +
+			valores["entradaOtrosCombustibles"];
+			valores["entradaCombustibleFuenteRenovable"] +
+			valores["entradaElectricidadFuenteRenovable"] +
+			valores["entradaEnergiaAutogeneradaRenovable"];
+
+		// Create an object with the names of the input dats and their values
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
+		});
+
+		// Calculate division
+		const result = numerador / denominador;
+
+		return {result, details};
+
+	} else if (name === "Consumo de energía") {
+		const valores = {
+			entradaCombustibleCarbon: 0,
+			entradaCombustibleDiesel: 0,
+			entradaCombustiblePetroleo: 0,
+			entradaCombustibleGas: 0,
+			entradaCombustibleGasLicuado: 0,
+			entradaCombustibleGasolina: 0,
+			entradaElectricidad: 0,
+			entradaOtrosCombustibles: 0,
+			entradaCombustibleFuenteRenovable: 0,
+			entradaElectricidadFuenteRenovable: 0,
+			entradaEnergiaAutogeneradaRenovable: 0,
+		}
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada combustible carbón") {
+				valores["entradaCombustibleCarbon"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 2 (Diesel)") {
+				valores["entradaCombustibleDiesel"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 6") {
+				valores["entradaCombustiblePetroleo"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas natural") {
+				valores["entradaCombustibleGas"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas licuado petroleo (GLP)") {
+				valores["entradaCombustibleGasLicuado"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible Gasolina") {
+				valores["entradaCombustibleGasolina"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad, calor, vapor, refrigeración") {
+				valores["entradaElectricidad"] = inputDat.value;
+			} else if (inputDat.name === "Entrada otros combustibles no renovables") {
+				valores["entradaOtrosCombustibles"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible fuente renovables") {
+				valores["entradaCombustibleFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad fuente renovable") {
+				valores["entradaElectricidadFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada energía autogenerada renovable") {
+				valores["entradaEnergiaAutogeneradaRenovable"] = inputDat.value;
+			}
+		})
+
+		return (
+			valores["entradaCombustibleCarbon"] +
+			valores["entradaCombustibleDiesel"] +
+			valores["entradaCombustiblePetroleo"] +
+			valores["entradaCombustibleGas"] +
+			valores["entradaCombustibleGasLicuado"] +
+			valores["entradaCombustibleGasolina"] +
+			valores["entradaElectricidad"] +
+			valores["entradaOtrosCombustibles"] +
+			valores["entradaCombustibleFuenteRenovable"] +
+			valores["entradaElectricidadFuenteRenovable"] +
+			valores["entradaEnergiaAutogeneradaRenovable"]
+		);
+		
+	} else if (name === "Tasa de intensidad de energía") {
+		const valores = {
+			entradaCombustibleCarbon: 0,
+			entradaCombustibleDiesel: 0,
+			entradaCombustiblePetroleo: 0,
+			entradaCombustibleGas: 0,
+			entradaCombustibleGasLicuado: 0,
+			entradaCombustibleGasolina: 0,
+			entradaElectricidad: 0,
+			entradaOtrosCombustibles: 0,
+			entradaCombustibleFuenteRenovable: 0,
+			entradaElectricidadFuenteRenovable: 0,
+			entradaEnergiaAutogeneradaRenovable: 0,
+			costosProveedoresLocales: 0,
+		}
+		
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada combustible carbón") {
+				valores["entradaCombustibleCarbon"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 2 (Diesel)") {
+				valores["entradaCombustibleDiesel"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible petroleo 6") {
+				valores["entradaCombustiblePetroleo"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas natural") {
+				valores["entradaCombustibleGas"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible gas licuado petroleo (GLP)") {
+				valores["entradaCombustibleGasLicuado"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible Gasolina") {
+				valores["entradaCombustibleGasolina"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad, calor, vapor, refrigeración") {
+				valores["entradaElectricidad"] = inputDat.value;
+			} else if (inputDat.name === "Entrada otros combustibles no renovables") {
+				valores["entradaOtrosCombustibles"] = inputDat.value;
+			} else if (inputDat.name === "Entrada combustible fuente renovables") {
+				valores["entradaCombustibleFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada electricidad fuente renovable") {
+				valores["entradaElectricidadFuenteRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Entrada energía autogenerada renovable") {
+				valores["entradaEnergiaAutogeneradaRenovable"] = inputDat.value;
+			} else if (inputDat.name === "Costos gastados en proveedores locales") {
+				valores["costosProveedoresLocales"] = inputDat.value;
+			}
+		})
+
+		const numerador =
+			valores["entradaCombustibleCarbon"] +
+			valores["entradaCombustibleDiesel"] +
+			valores["entradaCombustiblePetroleo"] +
+			valores["entradaCombustibleGas"] +
+			valores["entradaCombustibleGasLicuado"] +
+			valores["entradaCombustibleGasolina"] +
+			valores["entradaElectricidad"] +
+			valores["entradaOtrosCombustibles"] +
+			valores["entradaCombustibleFuenteRenovable"] +
+			valores["entradaElectricidadFuenteRenovable"] +
+			valores["entradaEnergiaAutogeneradaRenovable"];
+		
+		const denominador = valores["costosProveedoresLocales"];
+		return numerador / denominador;
 	}
 };
 
@@ -326,6 +584,25 @@ export const getIndicators = async (req, res) => {
 					.send({ message: "Indicators not found" });
 			return res.status(200).send({ indicators });
 		}
+	} catch (error) {
+		res.status(500).send({ message: "Internal Server Error" });
+	}
+};
+
+export const getIndicatorInfo = async (req, res) => {
+	try {
+		const indicator = await Indicator.findById(req.params.indicator);
+		if (!indicator)
+			return res.status(400).send({ message: "Indicator not found" });
+		// Each indicator contains a list of input dats IDS, we need to get the details of each input dat
+		const inputDats = await ListInputDat.find({
+			_id: { $in: indicator.inputDats },
+		});
+		if (!inputDats)
+			return res.status(400).send({ message: "InputDats not found" });
+		// Return only names of the input dats
+		const inputDatsNames = inputDats.map((inputDat) => inputDat.name);
+		return res.status(200).send({ indicator, inputDatsNames });
 	} catch (error) {
 		res.status(500).send({ message: "Internal Server Error" });
 	}

@@ -5,6 +5,7 @@ import verifyToken from "../middlewares/verifyToken.js";
 import checkRole from "../middlewares/role-authorize.js";
 //Controllers
 import {
+	getIndicatorInfo,
 	getIndicators,
 	getIndicatorValue,
 	registerIndicator,
@@ -12,6 +13,7 @@ import {
 } from "../controllers/indicator.js";
 
 //Get routes
+router.get("/:indicator", verifyToken, getIndicatorInfo);
 router.get("/:branch?", verifyToken, getIndicators);
 router.get(
 	"/values/:branch/:indicator/:year/:month?",
