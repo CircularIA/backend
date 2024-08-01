@@ -536,6 +536,52 @@ const getValue = (name, inputDatsValues) => {
 		
 		const denominador = valores["costosProveedoresLocales"];
 		return numerador / denominador;
+	} else if (name === "Porcentaje de circularidad entrada") {
+		const valores = {
+			entradaBiologicosRenovables: 0,
+			entradaTecnicosNoVirgen: 0,
+			entradaTotal: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Entrada de suministros biológicos renovables") {
+				valores["entradaBiologicosRenovables"] = inputDat.value;
+			}
+			if (inputDat.name === "Entrada de suministros técnicos de material no virgen") {
+				valores["entradaTecnicosNoVirgen"] = inputDat.value;
+			}
+			if (inputDat.name === "Entrada de suministros totales") {
+				valores["entradaTotal"] = inputDat.value;
+			}
+		})
+
+		const result = (valores["entradaBiologicosRenovables"] + valores["entradaTecnicosNoVirgen"]) / valores["entradaTotal"];
+							
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
+		});
+
+		return {result, details};
+						
+	} else if (name === "Proporción de gasto en proveedores locales") {
+		const valores = {
+			costosProveedoresLocales: 0,
+			costosTotalesProveedores: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Costos gastados en proveedores locales") {
+				valores["costosProveedoresLocales"] = inputDat.value;
+			}
+			if (inputDat.name === "Costos totales gastados en proveedores") {
+				valores["costosTotalesProveedores"] = inputDat.value;
+			}
+		})
+
+		const result = valores["costosProveedoresLocales"] / valores["costosTotalesProveedores"];
+		
+		return result;
 	}
 };
 
