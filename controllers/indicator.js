@@ -6,6 +6,7 @@ import Indicator from "../models/Indicator.js";
 import Branch from "../models/Branch.js";
 import InputDat from "../models/InputDat.js";
 import ListInputDat from "../models/ListInputDat.js";
+import e from "express";
 
 //Functions
 const getValue = (name, inputDatsValues) => {
@@ -14,13 +15,15 @@ const getValue = (name, inputDatsValues) => {
 		//Buscar en la variable inputDatsValues el valor del dato de entrada
 		const valores = {
 			generacionLodos: 0,
-			salidaCompostaje: 0,
-			salidaMasas: 0,
-			salidaBiodigestion: 0,
-			salidaRiles: 0,
+			valCompostaje: 0,
+			valMasa: 0,
+			valBiodigestion: 0,
+			valTratamientoRiles: 0,
 			entradaMunicipal: 0,
 		};
+		const details = {};
 		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
 			if (inputDat.name === "Salida compostaje de lodo generado") {
 				valores["generacionLodos"] = inputDat.value;
 			} else if (inputDat.name === "Salida compostaje") {
@@ -36,16 +39,10 @@ const getValue = (name, inputDatsValues) => {
 			}
 		});
 		console.log("valores", valores);
-		const numerador =
-			valores["generacionLodos"] +
-			valores["salidaCompostaje"] +
-			valores["salidaMasas"] +
-			valores["salidaBiodigestion"] +
-			valores["salidaRiles"];
+		const numerador = valores["generacionLodos"] + valores["valCompostaje"] + valores["valMasa"] + valores["valBiodigestion"] + valores["valTratamientoRiles"];
 		const denominador = numerador + valores["entradaMunicipal"] * 0.6;
-		console.log("numerador", numerador);
-		console.log("denominador", denominador);
-		return numerador / denominador;
+		const result = numerador / denominador;
+		return { result: result, details };
 	} else if (name === "Porcentaje de valorización ciclo técnico") {
 		const valores = {
 			generacionLodos: 0,
@@ -60,7 +57,9 @@ const getValue = (name, inputDatsValues) => {
 			salidaInerte: 0,
 			entradaCircularAgua: 0,
 		};
+		const details = {};
 		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
 			if (inputDat.name === "Salida residuos municipales") {
 				valores["entradaMunicipal"] = inputDat.value;
 			} else if (inputDat.name === "Salida Plástico") {
@@ -77,7 +76,7 @@ const getValue = (name, inputDatsValues) => {
 				valores["salidaReutilizacion"] = inputDat.value;
 			} else if (inputDat.name === "Salida peligrosos") {
 				valores["salidaPeligrosos"] = inputDat.value;
-			} else if (inputDat.name === "Salida inerte") {
+			} else if (inputDat.name === "Salida inertes") {
 				valores["salidaInerte"] = inputDat.value;
 			} else if (inputDat.name === "Entrada circular agua") {
 				valores["entradaCircularAgua"] = inputDat.value;
@@ -87,26 +86,10 @@ const getValue = (name, inputDatsValues) => {
 		});
 		console.log("valores", valores);
 		//Retornar el valor junto con el factor
-		const numerador =
-			valores["salidaChatarraFerrosa"] +
-			valores["salidaPlastico"] +
-			valores["salidaAluminio"] +
-			valores["salidaTetrapack"] +
-			valores["salidaIncineracionBiomasa"] +
-			valores["salidaPeligrosos"];
-		const denominador =
-			valores["salidaChatarraFerrosa"] +
-			valores["salidaPlastico"] +
-			valores["salidaAluminio"] +
-			valores["salidaTetrapack"] +
-			valores["salidaReutilizacion"] +
-			valores["salidaPeligrosos"] +
-			valores["salidaInerte"] +
-			valores["entradaMunicipal"] * 0.6 +
-			valores["entradaMunicipal"] *
-				(valores["generacionLodos"] - valores["entradaCircularAgua"]);
-
-		return numerador / denominador;
+		const numerador = valores["salidaChatarraFerrosa"] + valores["salidaPlastico"] + valores["salidaAluminio"] + valores["salidaTetrapack"] + valores["salidaIncineracionBiomasa"] + valores["salidaPeligrosos"]
+		const denominador = valores["salidaChatarraFerrosa"] + valores["salidaPlastico"] + valores["salidaAluminio"] + valores["salidaTetrapack"] + valores["salidaReutilizacion"] + valores["salidaPeligrosos"] + valores["salidaInerte"] + valores["entradaMunicipal"] * 0.6 + valores["entradaMunicipal"] * (valores["generacionLodos"] - valores["entradaCircularAgua"])
+		const result = numerador / denominador;
+		return { result: result, details };
 	} else if (name === "Porcentaje circularidad de salida") {
 		const valores = {
 			generacionLodos: 0,
@@ -126,11 +109,13 @@ const getValue = (name, inputDatsValues) => {
 			salidaPeligrosos: 0,
 			salidaInerte: 0,
 		};
+		const details = {};
 		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
 			if (inputDat.name === "Salida compostaje de lodo generado") {
 				valores["generacionLodos"] += inputDat.value;
 			} else if (inputDat.name === "Salida compostaje") {
-				valores["salidaResiduos"] += inputDat.value;
+				valores["salidaCompostaje"] += inputDat.value;
 			} else if (inputDat.name === "Salida masas") {
 				valores["salidaMasas"] += inputDat.value;
 			} else if (inputDat.name === "Salida biodigestión") {
@@ -157,7 +142,7 @@ const getValue = (name, inputDatsValues) => {
 				valores["salidaReutilizacion"] += inputDat.value;
 			} else if (inputDat.name === "Salida peligrosos") {
 				valores["salidaPeligrosos"] += inputDat.value;
-			} else if (inputDat.name === "Salida inerte") {
+			} else if (inputDat.name === "Salida inertes") {
 				valores["salidaInerte"] += inputDat.value;
 			}
 		});
@@ -190,7 +175,8 @@ const getValue = (name, inputDatsValues) => {
 			valores["salidaReutilizacion"] +
 			valores["salidaPeligrosos"] +
 			valores["salidaInerte"];
-		return numerador / denominador;
+		const result = numerador / denominador;
+		return { result: result, details };
 	} else if (name === "Porcentaje desviación de relleno") {
 		const valores = {
 			generacionLodos: 0,
@@ -210,11 +196,13 @@ const getValue = (name, inputDatsValues) => {
 			salidaPeligrosos: 0,
 			salidaInerte: 0,
 		};
+		const details = {};
 		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
 			if (inputDat.name === "Salida compostaje de lodo generado") {
 				valores["generacionLodos"] += inputDat.value;
 			} else if (inputDat.name === "Salida compostaje") {
-				valores["salidaResiduos"] += inputDat.value;
+				valores["salidaCompostaje"] += inputDat.value;
 			} else if (inputDat.name === "Salida masas") {
 				valores["salidaMasas"] += inputDat.value;
 			} else if (inputDat.name === "Salida biodigestión") {
@@ -241,7 +229,7 @@ const getValue = (name, inputDatsValues) => {
 				valores["salidaReutilizacion"] += inputDat.value;
 			} else if (inputDat.name === "Salida peligrosos") {
 				valores["salidaPeligrosos"] += inputDat.value;
-			} else if (inputDat.name === "Salida inerte") {
+			} else if (inputDat.name === "Salida inertes") {
 				valores["salidaInerte"] += inputDat.value;
 			}
 		});
@@ -276,8 +264,8 @@ const getValue = (name, inputDatsValues) => {
 			valores["salidaReutilizacion"] +
 			valores["salidaPeligrosos"] +
 			valores["salidaInerte"];
-
-		return numerador / denominador;
+		const result = numerador / denominador;
+		return { result: result, details };
 	} else if (name === "Intensidad de agua") {
 		const valores = {
 			entradaAguaTotal: 0,
@@ -408,7 +396,7 @@ const getValue = (name, inputDatsValues) => {
 			valores["entradaCombustibleGasolina"] +
 			valores["entradaElectricidad"] +
 			valores["entradaOtrosCombustibles"];
-			valores["entradaCombustibleFuenteRenovable"] +
+		valores["entradaCombustibleFuenteRenovable"] +
 			valores["entradaElectricidadFuenteRenovable"] +
 			valores["entradaEnergiaAutogeneradaRenovable"];
 
@@ -421,7 +409,7 @@ const getValue = (name, inputDatsValues) => {
 		// Calculate division
 		const result = numerador / denominador;
 
-		return {result, details};
+		return { result, details };
 
 	} else if (name === "Consumo de energía") {
 		const valores = {
@@ -476,7 +464,7 @@ const getValue = (name, inputDatsValues) => {
 			valores["entradaElectricidadFuenteRenovable"] +
 			valores["entradaEnergiaAutogeneradaRenovable"]
 		);
-		
+
 	} else if (name === "Tasa de intensidad de energía") {
 		const valores = {
 			entradaCombustibleCarbon: 0,
@@ -492,7 +480,7 @@ const getValue = (name, inputDatsValues) => {
 			entradaEnergiaAutogeneradaRenovable: 0,
 			costosProveedoresLocales: 0,
 		}
-		
+
 		inputDatsValues.forEach((inputDat) => {
 			if (inputDat.name === "Entrada combustible carbón") {
 				valores["entradaCombustibleCarbon"] = inputDat.value;
@@ -533,7 +521,7 @@ const getValue = (name, inputDatsValues) => {
 			valores["entradaCombustibleFuenteRenovable"] +
 			valores["entradaElectricidadFuenteRenovable"] +
 			valores["entradaEnergiaAutogeneradaRenovable"];
-		
+
 		const denominador = valores["costosProveedoresLocales"];
 		return numerador / denominador;
 	} else if (name === "Porcentaje de circularidad entrada") {
@@ -556,14 +544,14 @@ const getValue = (name, inputDatsValues) => {
 		})
 
 		const result = (valores["entradaBiologicosRenovables"] + valores["entradaTecnicosNoVirgen"]) / valores["entradaTotal"];
-							
+
 		const details = {};
 		inputDatsValues.forEach((inputDat) => {
 			details[inputDat.name] = inputDat.value;
 		});
 
-		return {result, details};
-						
+		return { result, details };
+
 	} else if (name === "Proporción de gasto en proveedores locales") {
 		const valores = {
 			costosProveedoresLocales: 0,
@@ -580,7 +568,153 @@ const getValue = (name, inputDatsValues) => {
 		})
 
 		const result = valores["costosProveedoresLocales"] / valores["costosTotalesProveedores"];
-		
+
+		return result;
+	} else if (name === "Productividad circular de material") { /* Aquí irán los indicadores económicos */
+		const valores = {
+			ingresosTotales: 0,
+			salidaResiduosMunicipales: 0,
+			salidaIncineracionBiomasa: 0,
+			salidaCoproceso: 0,
+			salidaPeligrosos: 0,
+			salidaInertes: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Ingresos totales") {
+				valores["ingresosTotales"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida residuos municipales") {
+				valores["salidaResiduosMunicipales"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida Incineración de biomasa") {
+				valores["salidaIncineracionBiomasa"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida coproceso") {
+				valores["salidaCoproceso"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida peligrosos") {
+				valores["salidaPeligrosos"] = inputDat.value;
+			}
+			if (inputDat.name === "Salida inertes") {
+				valores["salidaInertes"] = inputDat.value;
+			}
+		})
+
+		const numerador = valores["ingresosTotales"];
+		const denominador = valores["salidaResiduosMunicipales"] + valores["salidaIncineracionBiomasa"] + valores["salidaCoproceso"] + valores["salidaPeligrosos"] + valores["salidaInertes"];
+
+		const result = numerador / denominador;
+
+		return result;
+	} else if (name === "Porcentaje de ingreso por acciones circulares") {
+		const valores = {
+			ingresoVentaSubproducto: 0,
+			ingresoServicioCircularReciclaje: 0,
+			ingresosTotales: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Ingreso por venta de subproducto") {
+				valores["ingresoVentaSubproducto"] = inputDat.value;
+			}
+			if (inputDat.name === "Ingreso por servicio circular de reciclaje") {
+				valores["ingresoServicioCircularReciclaje"] = inputDat.value;
+			}
+			if (inputDat.name === "Ingresos totales") {
+				valores["ingresosTotales"] = inputDat.value;
+			}
+		})
+
+		const result = (valores["ingresoVentaSubproducto"] + valores["ingresoServicioCircularReciclaje"]) / valores["ingresosTotales"];
+
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
+		});
+
+		return { result, details };
+
+	} else if (name === "Porcentaje inversión en circularidad") {
+		const valores = {
+			inversionCircularPersonal: 0,
+			inversionCircularProyectos: 0,
+			inversionTotal: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Inversión circular de personal") {
+				valores["inversionCircularPersonal"] = inputDat.value;
+			}
+			if (inputDat.name === "Inversión circular de proyectos") {
+				valores["inversionCircularProyectos"] = inputDat.value;
+			}
+			if (inputDat.name === "Inversión total") {
+				valores["inversionTotal"] = inputDat.value;
+			}
+		})
+
+		const result = (valores["inversionCircularPersonal"] + valores["inversionCircularProyectos"]) / valores["inversionTotal"];
+
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
+		});
+
+		return { result, details };
+	} else if (name === "Empleo verde (Número gránde)") {
+		const valores = {
+			empleosDirectos: 0,
+			empleosIndirectosCreados: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Empleos directos") {
+				valores["empleosDirectos"] = inputDat.value;
+			}
+			if (inputDat.name === "Empleos indirectos creados (contratistas)") {
+				valores["empleosIndirectosCreados"] = inputDat.value;
+			}
+		})
+
+		const result = valores["empleosDirectos"] + valores["empleosIndirectosCreados"];
+
+		return result;
+	} else if (name === "Educación ambiental interna (Número grande)") {
+		const valores = {
+			horasCharlasEC: 0,
+			numeroAsistentesCharla: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Horas charlas de EC") {
+				valores["horasCharlasEC"] = inputDat.value;
+			}
+			if (inputDat.name === "Número de asistentes a las charla") {
+				valores["numeroAsistentesCharla"] = inputDat.value;
+			}
+		})
+
+		const result = valores["horasCharlasEC"] / valores["numeroAsistentesCharla"];
+
+		return result;
+	} else if (name === "Porcentaje de participación femenina (torta)") {
+		const valores = {
+			empleadosTotales: 0,
+			empleosMujeres: 0,
+		}
+
+		inputDatsValues.forEach((inputDat) => {
+			if (inputDat.name === "Empleados totales") {
+				valores["empleadosTotales"] = inputDat.value;
+			}
+			if (inputDat.name === "Empleos ocupados por mujeres") {
+				valores["empleosMujeres"] = inputDat.value;
+			}
+		})
+
+		const result = valores["empleosMujeres"] / valores["empleadosTotales"];
+
 		return result;
 	}
 };
@@ -742,10 +876,25 @@ export const getIndicatorValue = async (req, res) => {
 						currentIndicator.name,
 						inputDatValues
 					);
-					monthValue.value = value;
+					console.log(
+						"🚀 ~ getIndicatorValue ~ value:",
+						value
+					);
+					// Si value es del tipo {} se obtiene el valor y los detalles
+					if (typeof value === "object") {
+						monthValue.value = value.result;
+						monthValue.details = value.details;
+					} else {
+						// Si value es un número se obtiene el valor
+						monthValue.value = value;
+					}
 					monthValues.push(monthValue);
 				}
 			}
+			console.log(
+				"🚀 ~ getIndicatorValue ~ monthValues:",
+				monthValues
+			);
 			return res.status(200).send({ monthValues });
 		} else {
 			month = parseInt(month);
