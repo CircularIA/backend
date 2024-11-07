@@ -29,7 +29,7 @@ app.use(
 
 const corsOptions = {
 	credentials: true,
-	origin: process.env.FRONTEND_URL,
+	origin: true,
 };
 
 // Middleware
