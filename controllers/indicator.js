@@ -686,7 +686,10 @@ const getValue = (name, inputDatsValues) => {
 			numeroAsistentesCharla: 0,
 		}
 
+		const details = {};
+
 		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
 			if (inputDat.name === "Horas charlas de EC") {
 				valores["horasCharlasEC"] = inputDat.value;
 			}
@@ -697,7 +700,7 @@ const getValue = (name, inputDatsValues) => {
 
 		const result = valores["horasCharlasEC"] / valores["numeroAsistentesCharla"];
 
-		return result;
+		return { result, details };
 	} else if (name === "Porcentaje de participación femenina (torta)") {
 		const valores = {
 			empleadosTotales: 0,
@@ -716,6 +719,13 @@ const getValue = (name, inputDatsValues) => {
 		const result = valores["empleosMujeres"] / valores["empleadosTotales"];
 
 		return result;
+	} else if (name === "Social explicito (Figma)") {
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			console.log(inputDat);
+			details[inputDat.name] = inputDat.value;
+		})
+		return { details };
 	}
 };
 
