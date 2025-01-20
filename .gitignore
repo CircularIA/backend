@@ -128,3 +128,4 @@ dist
 # Rest request folder
 
 test/
+.codegpt
