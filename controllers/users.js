@@ -18,6 +18,17 @@ export const getUser = async (req, res) => {
 	}
 };
 
+export const getUsersByBranch = async (req, res) => {
+	try {
+		const { branchID } = req.params;
+		const branch = await Branch.findById(branchID).populate("user");
+		if (!branch) return res.status(400).send({ message: "User not found" });
+		return res.status(200).send({ branch });
+	} catch (error) {
+		res.status(500).send({ message: "Internal Server Error" });
+	}
+};
+
 //This is to create a user in the database with form register
 export const createAdminUser = async (req, res) => {
 	try {

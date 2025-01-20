@@ -3,6 +3,7 @@ const router = express.Router();
 
 import {
 	getUser,
+	getUsersByBranch,
 	createAdminUser,
 	createOwnerUser,
 	createRegularUser,
@@ -12,6 +13,7 @@ import checkRole from "../middlewares/role-authorize.js";
 
 //Get Routes
 router.get("/:id", verifyToken, getUser);
+router.get("/byBranch/:id", verifyToken, getUsersByBranch);
 //Post Routes
 router.post("/createAdmin", createAdminUser);
 router.post("/createOwner", verifyToken, checkRole("Admin"), createOwnerUser);
