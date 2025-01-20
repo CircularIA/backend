@@ -11,7 +11,7 @@ import verifyToken from "../middlewares/verifyToken.js";
 import checkRole from "../middlewares/role-authorize.js";
 
 //Get Routes
-router.get("/", verifyToken, getUser);
+router.get("/:id", verifyToken, getUser);
 //Post Routes
 router.post("/createAdmin", createAdminUser);
 router.post("/createOwner", verifyToken, checkRole("Admin"), createOwnerUser);
