@@ -13,7 +13,7 @@ import checkRole from "../middlewares/role-authorize.js";
 
 //Get Routes
 router.get("/:id", verifyToken, getUser);
-router.get("/byBranch/:id", verifyToken, getUsersByBranch);
+router.get("/branch/:branchId", verifyToken, getUsersByBranch);
 //Post Routes
 router.post("/createAdmin", createAdminUser);
 router.post("/createOwner", verifyToken, checkRole("Admin"), createOwnerUser);

@@ -56,6 +56,7 @@ branchSchema.statics.validateBranch = async function (id) {
 			.label("Company")
 			.messages({ "string.empty": "Company is required" }),
 		manager: Joi.string()
+			.required()
 			.label("Manager")
 			.messages({ "string.empty": "Manager is required" }),
 		inputDats: Joi.array()

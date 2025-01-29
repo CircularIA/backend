@@ -20,11 +20,16 @@ export const getUser = async (req, res) => {
 
 export const getUsersByBranch = async (req, res) => {
 	try {
-		const { branchID } = req.params;
-		const branch = await Branch.findById(branchID).populate("user");
+		console.log("enter in this endpoint to get the users");
+		const { branchId } = req.params;
+		const branch = await Branch.findById(branchId).populate(
+			"assignedUsers"
+		);
 		if (!branch) return res.status(400).send({ message: "User not found" });
-		return res.status(200).send({ branch });
+		const assignedUsers = branch.assignedUsers;
+		return res.status(200).send({ assignedUsers });
 	} catch (error) {
+		console.log("error in getUsersByBranch", error);
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
