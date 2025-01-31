@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { connectDB } from "./db.js";
-import { config } from "dotenv";
 import compression from "compression";
 //Routes
 import userRoutes from "./routes/users.js";
@@ -12,7 +11,6 @@ import indicatorRoutes from "./routes/indicator.js";
 import inputDatRoutes from "./routes/inputDats.js";
 import listInputDatRoutes from "./routes/listInputDats.js";
 import userSelectionsRoutes from "./routes/userSelections.js";
-import mailRoutes from "./routes/mail.js";
 
 //Define the environment
 const app = express();
@@ -28,7 +26,7 @@ app.use(
 );
 
 const corsOptions = {
-	origin: "https://dashboard-am1.pages.dev" || "http://localhost:5173", // Permite solo este dominio
+	origin: ["https://dashboard-am1.pages.dev", "http://localhost:5173"], // Permite solo este dominio
 	credentials: true, // Permite cookies y autenticación
 	methods: "GET,POST,PUT,DELETE", // Métodos permitidos
 	allowedHeaders: "Content-Type,Authorization", // Encabezados permitidos
