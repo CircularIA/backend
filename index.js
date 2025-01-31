@@ -28,8 +28,10 @@ app.use(
 );
 
 const corsOptions = {
-	credentials: true,
-	origin: true,
+	origin: "https://dashboard-am1.pages.dev" || "http://localhost:5173", // Permite solo este dominio
+	credentials: true, // Permite cookies y autenticación
+	methods: "GET,POST,PUT,DELETE", // Métodos permitidos
+	allowedHeaders: "Content-Type,Authorization", // Encabezados permitidos
 };
 
 // Middleware
