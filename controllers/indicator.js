@@ -605,8 +605,13 @@ const getValue = (name, inputDatsValues) => {
 		const denominador = valores["salidaResiduosMunicipales"] + valores["salidaIncineracionBiomasa"] + valores["salidaCoproceso"] + valores["salidaPeligrosos"] + valores["salidaInertes"];
 
 		const result = numerador / denominador;
+		const details = {};
+		inputDatsValues.forEach((inputDat) => {
+			details[inputDat.name] = inputDat.value;
+		})
+		return { result, details };
 
-		return result;
+
 	} else if (name === "Porcentaje de ingreso por acciones circulares") {
 		const valores = {
 			ingresoVentaSubproducto: 0,
