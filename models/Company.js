@@ -6,7 +6,7 @@ const companySchema = new Schema({
     rut: {type: String, required: [true, 'Rut Company is required'], unique: true},
     name: {type: String, required: true},
     email: {type: String, required: true, unique: true},
-    image: {type: String},
+    image: { type: String, default: "" },
     description: {type: String},
     //Gestion de residuos, bienes de consumo
     //retail, centro de distribuicion, transporte

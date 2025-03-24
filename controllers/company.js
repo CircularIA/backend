@@ -1,10 +1,19 @@
 //Packages
 import { Types } from 'mongoose';
+import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
 
 //Models
 import Company from '../models/Company.js';
 import Branch from '../models/Branch.js';
 import User from '../models/User.js';
+
+// Configura Cloudinary usando variables de entorno
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const getCompany = async (req, res) => {
     try {
@@ -170,5 +179,54 @@ export const deleteCompany = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: 'Internal Server Error', error: error.message });
+    }
+};
+
+export const uploadLogo = async (req, res) => {
+    try {
+        // Verificar que se recibió un archivo
+        if (!req.file) {
+            return res
+                .status(400)
+                .json({ success: false, message: "No se recibió ningún archivo" });
+        }
+
+        // Subir el archivo a Cloudinary en la carpeta "company_logos"
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: "company_logos",
+        });
+
+        // Eliminar el archivo temporal almacenado por multer
+        fs.unlinkSync(req.file.path);
+
+        // Obtener el id de la compañía desde req.params
+        const companyId = req.params.id;
+
+        // Actualizar el documento de la compañía con la URL del logo
+        // Aquí se asume que la propiedad para la imagen es "image". Puedes cambiarla a "logoUrl" si lo prefieres.
+        const updatedCompany = await Company.findByIdAndUpdate(
+            companyId,
+            { image: result.secure_url },
+            { new: true }
+        );
+
+        if (!updatedCompany) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Compañía no encontrada" });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Logo subido/actualizado exitosamente",
+            data: updatedCompany,
+        });
+    } catch (error) {
+        console.error("Error al subir la imagen:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Error al subir la imagen",
+            error: error.message,
+        });
     }
 };

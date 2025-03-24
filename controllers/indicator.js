@@ -403,7 +403,11 @@ const getValue = (name, inputDatsValues) => {
 		// Create an object with the names of the input dats and their values
 		const details = {};
 		inputDatsValues.forEach((inputDat) => {
-			details[inputDat.name] = inputDat.value;
+			// Suponiendo que inputDat tiene una propiedad `unidad` que almacena la unidad de medida
+			details[inputDat.name] = {
+				valor: inputDat.value,
+				unidad: inputDat.measurement
+			};
 		});
 
 		// Calculate division
@@ -667,7 +671,7 @@ const getValue = (name, inputDatsValues) => {
 		});
 
 		return { result, details };
-	} else if (name === "Empleo verde (Número gránde)") {
+	} else if (name === "Empleo verde") {
 		const valores = {
 			empleosDirectos: 0,
 			empleosIndirectosCreados: 0,
@@ -685,7 +689,7 @@ const getValue = (name, inputDatsValues) => {
 		const result = valores["empleosDirectos"] + valores["empleosIndirectosCreados"];
 
 		return result;
-	} else if (name === "Educación ambiental interna (Número grande)") {
+	} else if (name === "Educación ambiental interna") {
 		const valores = {
 			horasCharlasEC: 0,
 			numeroAsistentesCharla: 0,
@@ -706,7 +710,7 @@ const getValue = (name, inputDatsValues) => {
 		const result = valores["horasCharlasEC"] / valores["numeroAsistentesCharla"];
 
 		return { result, details };
-	} else if (name === "Porcentaje de participación femenina (torta)") {
+	} else if (name === "Porcentaje de participación femenina") {
 		const valores = {
 			empleadosTotales: 0,
 			empleosMujeres: 0,
@@ -724,7 +728,7 @@ const getValue = (name, inputDatsValues) => {
 		const result = valores["empleosMujeres"] / valores["empleadosTotales"];
 
 		return result;
-	} else if (name === "Social explicito (Figma)") {
+	} else if (name === "Social explicito") {
 		const details = {};
 		inputDatsValues.forEach((inputDat) => {
 			console.log(inputDat);
@@ -870,6 +874,7 @@ export const getIndicatorValue = async (req, res) => {
 					{
 						$addFields: {
 							name: "$listInputDatDetails.name",
+							measurement: "$listInputDatDetails.measurement",
 						},
 					},
 					{
