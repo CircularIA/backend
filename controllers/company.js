@@ -23,19 +23,59 @@ export const getCompany = async (req, res) => {
 
         // *if user is type Admin, return whole branch
         if (findUser.role === 'Admin') {
-            const companies = await Company.find({}).populate('branches')
+            const companies = await Company.find({}).populate({
+                path: 'branches',
+                populate: {
+                    path: 'manager',
+                    select: 'username email' // Select the fields you want from the manager
+                }
+            });
+            
             if (!companies) return res.status(400).send({ message: 'Companies not found' });
-            return res.status(200).send({ companies });
+            
+            // Add managerName to each branch
+            const companiesWithManagerNames = companies.map(company => {
+                const companyObj = company.toObject();
+                if (companyObj.branches && companyObj.branches.length > 0) {
+                    companyObj.branches = companyObj.branches.map(branch => {
+                        return {
+                            ...branch,
+                            managerName: branch.manager ? branch.manager.username : '',
+                            managerEmail: branch.manager ? branch.manager.email : ''
+                        };
+                    });
+                }
+                return companyObj;
+            });
+            
+            return res.status(200).send({ companies: companiesWithManagerNames });
         } else if (findUser.role === 'Owner') {
-            const findCompany = await Company.findById(findUser.company._id).populate('branches');
+            const findCompany = await Company.findById(findUser.company._id).populate({
+                path: 'branches',
+                populate: {
+                    path: 'manager',
+                    select: 'username email'
+                }
+            });
+            
             if (!findCompany) return res.status(400).send({ message: 'Company not found' });
-            // *This user is a owner user, just return branch of the company associate it
-            const dataCompany = await Company.findById(findUser.company._id).populate('branches');
-            if (!dataCompany) return res.status(400).send({ message: 'Company not found' });
-            return res.status(200).send({ companies: dataCompany });
+            
+            // Add managerName to each branch
+            const companyObj = findCompany.toObject();
+            if (companyObj.branches && companyObj.branches.length > 0) {
+                companyObj.branches = companyObj.branches.map(branch => {
+                    return {
+                        ...branch,
+                        managerName: branch.manager ? branch.manager.username : '',
+                        managerEmail: branch.manager ? branch.manager.email : ''
+                    };
+                });
+            }
+            
+            return res.status(200).send({ companies: companyObj });
         } else {
             // *This user just have access to branch asigned to a departament
-
+            // If you need to implement this section, follow the same pattern as above
         }
     } catch (error) {
         console.log("error", error)

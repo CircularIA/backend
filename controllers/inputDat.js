@@ -7,6 +7,7 @@ import Branch from "../models/Branch.js";
 import Indicator from "../models/Indicator.js";
 import User from "../models/User.js";
 import Company from "../models/Company.js";
+import { redis } from "../utils/redisClient.js";
 
 export const getInputDats = async (req, res) => {
 	try {
@@ -48,6 +49,7 @@ export const getInputDats = async (req, res) => {
 		res.status(500).send({ message: "Internal Server Error" });
 	}
 };
+
 //Hay que definir 4 casos para este endpoint
 //Si no se recibe fecha, obtener todos los datos historicos
 //Si se recibe el año, obtener todos los datos del año
@@ -394,6 +396,457 @@ export const registerInputDatsMany = async (req, res) => {
 		res.status(500).send({
 			message: "Internal Server Error",
 			error: error.message,
+		});
+	}
+};
+
+export const checkExistingInputDats = async (req, res) => {
+	try {
+		console.log("Starting data verification process");
+
+		const { company, branch } = req.params;
+		const { data, year } = req.body;
+
+		console.log(`Request params: company=${company}, branch=${branch}`);
+		console.log(`Request body: year=${year}, data length=${data ? data.length : 'undefined'}`);
+
+		if (!data || !Array.isArray(data)) {
+			return res.status(400).send({ message: "Invalid data format. Expected an array." });
+		}
+
+		if (!year) {
+			return res.status(400).send({ message: "Year is required" });
+		}
+
+		console.log("Verifying company and branch...");
+		const currentCompany = await Company.findById(company);
+		if (!currentCompany) {
+			console.log("Company not found");
+			return res.status(400).send({ message: "Company not found" });
+		}
+
+		const currentBranch = await Branch.findById(branch);
+		if (!currentBranch) {
+			console.log("Branch not found");
+			return res.status(400).send({ message: "Branch not found" });
+		}
+
+		const months = [
+			"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+			"Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+		];
+
+		// Extraer todos los nombres de indicadores del array de datos
+		const indicatorNames = data
+			.map(row => row["NOMBRE INDICADOR"])
+			.filter(name => name); // Filtrar nombres vacíos
+
+		console.log(`Found ${indicatorNames.length} unique indicators to check`);
+
+		// Buscar todos los indicadores en una sola consulta
+		const listInputDats = await ListInputDat.find({
+			name: { $in: indicatorNames }
+		});
+
+		console.log(`Found ${listInputDats.length} existing indicators in database`);
+
+		// Crear un mapa para acceso rápido por nombre
+		const listInputDatMap = {};
+		listInputDats.forEach(indicator => {
+			listInputDatMap[indicator.name] = indicator;
+		});
+
+		// Crear un rango de fechas para todo el año
+		const startDate = new Date(parseInt(year), 0, 1);
+		const endDate = new Date(parseInt(year) + 1, 0, 1);
+
+		// Obtener todos los IDs de los indicadores encontrados
+		const listInputDatIds = listInputDats.map(indicator => indicator._id);
+
+		// Buscar todos los datos existentes para estos indicadores en este año en una sola consulta
+		const existingData = await InputDat.find({
+			listInputDat: { $in: listInputDatIds },
+			company: company,
+			branch: branch,
+			date: { $gte: startDate, $lt: endDate }
+		});
+
+		console.log(`Found ${existingData.length} existing data points for the year ${year}`);
+
+		// Crear un mapa para acceso rápido a los datos existentes
+		const existingDataMap = {};
+		existingData.forEach(data => {
+			const indicatorId = data.listInputDat.toString();
+			const month = data.date.getMonth();
+			
+			if (!existingDataMap[indicatorId]) {
+				existingDataMap[indicatorId] = {};
+			}
+			
+			existingDataMap[indicatorId][month] = {
+				exists: true,
+				value: data.value,
+				date: data.date,
+				id: data._id.toString()
+			};
+		});
+
+		// Objeto para almacenar los resultados de la verificación
+		const verificationResults = {};
+
+		// Procesar cada indicador
+		for (const indicatorName of indicatorNames) {
+			const listInputDat = listInputDatMap[indicatorName];
+			
+			if (!listInputDat) {
+				// Si el indicador no existe, no hay datos que verificar
+				verificationResults[indicatorName] = {
+					exists: false,
+					months: {}
+				};
+				continue;
+			}
+			
+			// Si el indicador existe, verificar qué meses tienen datos
+			const existingMonths = {};
+			const indicatorId = listInputDat._id.toString();
+			const indicatorData = existingDataMap[indicatorId] || {};
+			
+			for (let i = 0; i < months.length; i++) {
+				const month = months[i];
+				
+				if (indicatorData[i]) {
+					// Existe dato para este mes
+					existingMonths[month] = indicatorData[i];
+				} else {
+					// No existe dato para este mes
+					existingMonths[month] = {
+						exists: false
+					};
+				}
+			}
+			
+			verificationResults[indicatorName] = {
+				exists: true,
+				id: indicatorId,
+				months: existingMonths
+			};
+		}
+		
+		// Preparar respuesta con los datos verificados
+		const response = {
+			year,
+			company: currentCompany.name,
+			branch: currentBranch.name,
+			indicators: verificationResults,
+			summary: {
+				total: Object.keys(verificationResults).length,
+				withExistingData: Object.values(verificationResults).filter(indicator => 
+					indicator.exists && Object.values(indicator.months).some(month => month.exists)
+				).length
+			}
+		};
+		
+		return res.status(200).send(response);
+	} catch (error) {
+		console.error("Error in checkExistingInputDats:", error);
+		
+		if (error.name === "ValidationError") {
+			return res.status(400).send({ message: error.message });
+		}
+		
+		res.status(500).send({
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+};
+
+export const importInputDats = async (req, res) => {
+	try {
+		console.log("Starting import process");
+
+		const { company, branch } = req.params;
+		const { data, year } = req.body;
+
+		console.log(`Request params: company=${company}, branch=${branch}`);
+		console.log(`Request body: year=${year}, data length=${data ? data.length : 'undefined'}`);
+
+		if (!data || !Array.isArray(data)) {
+			return res.status(400).send({ message: "Invalid data format. Expected an array." });
+		}
+
+		if (!year) {
+			return res.status(400).send({ message: "Year is required" });
+		}
+
+		console.log("Verifying company and branch...");
+		const currentCompany = await Company.findById(company);
+		if (!currentCompany) {
+			console.log("Company not found");
+			return res.status(400).send({ message: "Company not found" });
+		}
+
+		const currentBranch = await Branch.findById(branch);
+		if (!currentBranch) {
+			console.log("Branch not found");
+			return res.status(400).send({ message: "Branch not found" });
+		}
+
+		const currentUser = req.user;
+		const userId = currentUser._id.toString();
+		const user = await User.findById(userId);
+		const userInfo = {
+			username: user.username,
+			email: user.email,
+			role: user.role,
+		};
+
+		const months = [
+			"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+			"Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+		];
+
+		const results = [];
+		const errors = [];
+		const bulkOps = [];
+		const listInputCache = {};
+
+		// Variables para medir progreso
+		const totalRows = data.length;
+		let completedRows = 0;
+		
+		// Generar un ID único para esta importación
+		const importId = new Date().getTime();
+		const redisKey = `import:${userId}:${importId}`;
+
+		// Inicializar el progreso en Redis
+		await redis.set(redisKey, JSON.stringify({ 
+			importId,
+			completed: 0, 
+			total: totalRows, 
+			status: 'in_progress',
+			year,
+			company,
+			branch,
+			startTime: new Date().toISOString()
+		}));
+		
+		// Guardar el ID de la importación actual para este usuario
+		await redis.set(`import:${userId}:current`, importId.toString());
+
+		console.log("Processing each indicator data row...");
+		for (const row of data) {
+			const indicatorName = row["NOMBRE INDICADOR"];
+			if (!indicatorName) {
+				errors.push("Row missing indicator name");
+				continue;
+			}
+
+			let listInputDat;
+			if (listInputCache[indicatorName]) {
+				listInputDat = listInputCache[indicatorName];
+			} else {
+				listInputDat = await ListInputDat.findOne({ name: indicatorName });
+
+				if (!listInputDat) {
+					listInputDat = new ListInputDat({
+						_id: new Types.ObjectId(),
+						name: indicatorName,
+						description: `Imported indicator: ${indicatorName}`,
+						measurement: "units",
+						category: "Ambiental",
+						subcategory: "Salida y valorización de Residuos, Productos y subproductos",
+					});
+					await listInputDat.save();
+				}
+
+				listInputCache[indicatorName] = listInputDat;
+			}
+
+			for (let i = 0; i < months.length; i++) {
+				const month = months[i];
+				const value = row[month];
+
+				if (value === undefined || value === null || value === "") continue;
+
+				const numericValue = parseFloat(value.toString().replace(",", "."));
+				if (isNaN(numericValue)) {
+					errors.push(`Invalid value for ${indicatorName} in ${month}: ${value}`);
+					continue;
+				}
+
+				const date = new Date(parseInt(year), i, 1);
+
+				bulkOps.push({
+					insertOne: {
+						document: {
+							_id: new Types.ObjectId(),
+							value: numericValue,
+							date: date,
+							listInputDat: listInputDat._id,
+							company: company,
+							branch: branch,
+							user: userInfo
+						}
+					}
+				});
+
+				results.push({
+					indicator: indicatorName,
+					month: month,
+					value: numericValue,
+					date: date
+				});
+			}
+			
+			// Actualizar el progreso
+			completedRows++;
+			
+			// Actualizar Redis cada 2 filas o al finalizar
+			if (completedRows % 2 === 0 || completedRows === totalRows) {
+				await redis.set(redisKey, JSON.stringify({ 
+					importId,
+					completed: completedRows, 
+					total: totalRows,
+					status: 'in_progress',
+					year,
+					company,
+					branch,
+					startTime: new Date().toISOString()
+				}));
+				console.log(`Progress updated: ${completedRows}/${totalRows} rows processed`);
+			}
+		}
+
+		// Asegurarse de que Redis muestre el progreso correcto antes de ejecutar el bulkWrite final
+		await redis.set(redisKey, JSON.stringify({ 
+			importId,
+			completed: totalRows, 
+			total: totalRows,
+			status: 'processing_final_batch',
+			year,
+			company,
+			branch,
+			startTime: new Date().toISOString()
+		}));
+
+		if (bulkOps.length > 0) {
+			console.log(`Saving ${bulkOps.length} documents in bulk...`);
+			await InputDat.bulkWrite(bulkOps);
+		}
+
+		// Marcar como completado en Redis
+		await redis.set(redisKey, JSON.stringify({ 
+			importId,
+			completed: totalRows, 
+			total: totalRows,
+			status: 'completed',
+			results: results.length,
+			errors: errors.length,
+			year,
+			company,
+			branch,
+			startTime: new Date().toISOString(),
+			endTime: new Date().toISOString()
+		}));
+		
+		// Establecer un tiempo de expiración para la clave (24 horas)
+		await redis.expire(redisKey, 86400);
+
+		console.log("Import process completed.");
+		return res.status(200).send({
+			message: "Data imported successfully",
+			imported: results.length,
+			errors: errors.length > 0 ? errors : undefined,
+			importId
+		});
+
+	} catch (error) {
+		console.error("Error importing data:", error);
+		
+		// Registrar el error en Redis si hay un userId disponible
+		if (req.user && req.user._id) {
+			const userId = req.user._id.toString();
+			const importId = await redis.get(`import:${userId}:current`);
+			
+			if (importId) {
+				const redisKey = `import:${userId}:${importId}`;
+				await redis.set(redisKey, JSON.stringify({ 
+					importId,
+					status: 'error',
+					error: error.message,
+					endTime: new Date().toISOString()
+				}));
+				await redis.expire(redisKey, 86400); // 24 horas
+			}
+		}
+		
+		if (error.name === "ValidationError") {
+			return res.status(400).send({ message: error.message });
+		}
+		res.status(500).send({
+			message: "Internal Server Error",
+			error: error.message,
+		});
+	}
+};
+
+export const getImportProgress = async (req, res) => {
+	try {
+		// Verificar que req.user existe
+		if (!req.user || !req.user._id) {
+			return res.status(401).send({ message: "Usuario no autenticado" });
+		}
+
+		const userId = req.user._id.toString();
+		
+		// Obtener el ID de la importación actual
+		const currentImportId = await redis.get(`import:${userId}:current`);
+		
+		if (!currentImportId) {
+			return res.status(404).send({ message: "No import in progress" });
+		}
+		
+		// Construir la clave para obtener los detalles de la importación
+		const redisKey = `import:${userId}:${currentImportId}`;
+		
+		// Obtener los detalles de la importación
+		let progressData = await redis.get(redisKey);
+		let progress;
+		
+		// Manejar diferentes tipos de respuesta de Upstash Redis
+		if (progressData === null) {
+			return res.status(404).send({ message: "Import data not found" });
+		} else if (typeof progressData === 'string') {
+			// Si es una cadena, intentar parsearla como JSON
+			try {
+				progress = JSON.parse(progressData);
+			} catch (e) {
+				console.error("Error parsing progress data:", e);
+				return res.status(500).send({ 
+					message: "Error parsing progress data", 
+					error: e.message 
+				});
+			}
+		} else {
+			// Si ya es un objeto, usarlo directamente
+			progress = progressData;
+		}
+		
+		// Calcular el porcentaje de progreso
+		if (progress && progress.total > 0) {
+			progress.progressPercentage = Math.round((progress.completed / progress.total) * 100);
+		} else if (progress) {
+			progress.progressPercentage = 0;
+		}
+		
+		return res.status(200).send(progress);
+	} catch (error) {
+		console.error("Error getting import progress:", error);
+		return res.status(500).send({ 
+			message: "Error getting import progress", 
+			error: error.message 
 		});
 	}
 };

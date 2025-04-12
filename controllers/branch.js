@@ -12,6 +12,7 @@ export const getBranch = async (req, res) => {
 		//Depending of the user type and the user id, we have to return the branches
 		const { user } = req;
 		const findUser = await User.findById(user._id).populate("company");
+		console.log("findUser", findUser);
 		if (!findUser)
 			return res.status(400).send({ message: "User not found" });
 		// *if user is admin, return all branches
