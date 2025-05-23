@@ -11,6 +11,7 @@ import indicatorRoutes from "./routes/indicator.js";
 import inputDatRoutes from "./routes/inputDats.js";
 import listInputDatRoutes from "./routes/listInputDats.js";
 import userSelectionsRoutes from "./routes/userSelections.js";
+import reportRoutes from "./routes/reportRoutes.js";
 
 //Define the environment
 const app = express();
@@ -46,6 +47,7 @@ app.use("/indicator", indicatorRoutes);
 app.use("/inputDat", inputDatRoutes);
 app.use("/listInputDat", listInputDatRoutes);
 app.use("/userSelections", userSelectionsRoutes);
+app.use("/reports", reportRoutes);
 
 // Connect to database
 connectDB();

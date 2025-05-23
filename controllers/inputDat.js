@@ -7,6 +7,7 @@ import Branch from "../models/Branch.js";
 import Indicator from "../models/Indicator.js";
 import User from "../models/User.js";
 import Company from "../models/Company.js";
+import ImportHistory from "../models/ImportHistory.js";
 import { redis } from "../utils/redisClient.js";
 
 export const getInputDats = async (req, res) => {
@@ -607,7 +608,10 @@ export const importInputDats = async (req, res) => {
 			"Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
 		];
 
-		const results = [];
+		const results = {
+			created: [],
+			updated: []
+		};
 		const errors = [];
 		const bulkOps = [];
 		const listInputCache = {};
@@ -619,6 +623,11 @@ export const importInputDats = async (req, res) => {
 		// Generar un ID único para esta importación
 		const importId = new Date().getTime();
 		const redisKey = `import:${userId}:${importId}`;
+		
+		// IMPORTANTE: Primero actualizar el ID de importación actual antes de inicializar el progreso
+		// Esto garantiza que el frontend obtenga el ID correcto desde el principio
+		await redis.set(`import:${userId}:current`, importId.toString());
+		console.log(`Set current import ID for user ${userId} to ${importId}`);
 
 		// Inicializar el progreso en Redis
 		await redis.set(redisKey, JSON.stringify({ 
@@ -632,9 +641,10 @@ export const importInputDats = async (req, res) => {
 			startTime: new Date().toISOString()
 		}));
 		
-		// Guardar el ID de la importación actual para este usuario
-		await redis.set(`import:${userId}:current`, importId.toString());
-
+		// Establecer un tiempo de expiración para la clave (24 horas)
+		await redis.expire(redisKey, 86400);
+		await redis.expire(`import:${userId}:current`, 86400);
+		
 		console.log("Processing each indicator data row...");
 		for (const row of data) {
 			const indicatorName = row["NOMBRE INDICADOR"];
@@ -677,27 +687,63 @@ export const importInputDats = async (req, res) => {
 				}
 
 				const date = new Date(parseInt(year), i, 1);
-
-				bulkOps.push({
-					insertOne: {
-						document: {
-							_id: new Types.ObjectId(),
-							value: numericValue,
-							date: date,
-							listInputDat: listInputDat._id,
-							company: company,
-							branch: branch,
-							user: userInfo
-						}
+				
+				// Verificar si ya existe un registro para este indicador, mes, año, compañía y sucursal
+				const existingRecord = await InputDat.findOne({
+					listInputDat: listInputDat._id,
+					company: company,
+					branch: branch,
+					date: {
+						$gte: new Date(parseInt(year), i, 1),
+						$lt: new Date(parseInt(year), i + 1, 1)
 					}
 				});
 
-				results.push({
-					indicator: indicatorName,
-					month: month,
-					value: numericValue,
-					date: date
-				});
+				if (existingRecord) {
+					// Actualizar el registro existente
+					bulkOps.push({
+						updateOne: {
+							filter: { _id: existingRecord._id },
+							update: { 
+								$set: { 
+									value: numericValue,
+									user: userInfo,
+									updatedAt: new Date()
+								} 
+							}
+						}
+					});
+					
+					results.updated.push({
+						indicator: indicatorName,
+						month: month,
+						value: numericValue,
+						date: date,
+						previousValue: existingRecord.value
+					});
+				} else {
+					// Crear un nuevo registro
+					bulkOps.push({
+						insertOne: {
+							document: {
+								_id: new Types.ObjectId(),
+								value: numericValue,
+								date: date,
+								listInputDat: listInputDat._id,
+								company: company,
+								branch: branch,
+								user: userInfo
+							}
+						}
+					});
+					
+					results.created.push({
+						indicator: indicatorName,
+						month: month,
+						value: numericValue,
+						date: date
+					});
+				}
 			}
 			
 			// Actualizar el progreso
@@ -732,32 +778,52 @@ export const importInputDats = async (req, res) => {
 		}));
 
 		if (bulkOps.length > 0) {
-			console.log(`Saving ${bulkOps.length} documents in bulk...`);
+			console.log(`Executing ${bulkOps.length} operations (${results.created.length} inserts, ${results.updated.length} updates)...`);
 			await InputDat.bulkWrite(bulkOps);
 		}
 
 		// Marcar como completado en Redis
-		await redis.set(redisKey, JSON.stringify({ 
+		const progress = {
 			importId,
 			completed: totalRows, 
 			total: totalRows,
 			status: 'completed',
-			results: results.length,
-			errors: errors.length,
+			created: results.created.length,
+			updated: results.updated.length,
+			errorCount: errors.length,
 			year,
 			company,
 			branch,
 			startTime: new Date().toISOString(),
 			endTime: new Date().toISOString()
-		}));
+		};
+		await redis.set(redisKey, JSON.stringify(progress));
 		
-		// Establecer un tiempo de expiración para la clave (24 horas)
-		await redis.expire(redisKey, 86400);
+		// El tiempo de expiración ya se estableció al inicio del proceso
+		// await redis.expire(redisKey, 86400);
+
+		// Guardar el historial de importación en MongoDB
+		const importHistory = new ImportHistory({
+			importId: importId.toString(),
+			userId: userId,
+			company: company,
+			branch: branch,
+			year: year,
+			total: totalRows,
+			created: results.created.length,
+			updated: results.updated.length,
+			errorCount: errors.length,
+			status: 'completed',
+			startTime: progress.startTime,
+			endTime: progress.endTime
+		});
+		await importHistory.save();
 
 		console.log("Import process completed.");
 		return res.status(200).send({
 			message: "Data imported successfully",
-			imported: results.length,
+			created: results.created.length,
+			updated: results.updated.length,
 			errors: errors.length > 0 ? errors : undefined,
 			importId
 		});
@@ -803,6 +869,7 @@ export const getImportProgress = async (req, res) => {
 		
 		// Obtener el ID de la importación actual
 		const currentImportId = await redis.get(`import:${userId}:current`);
+		console.log(`Checking progress for user ${userId}, current import ID: ${currentImportId}`);
 		
 		if (!currentImportId) {
 			return res.status(404).send({ message: "No import in progress" });
@@ -817,11 +884,13 @@ export const getImportProgress = async (req, res) => {
 		
 		// Manejar diferentes tipos de respuesta de Upstash Redis
 		if (progressData === null) {
+			console.log(`No progress data found for key ${redisKey}`);
 			return res.status(404).send({ message: "Import data not found" });
 		} else if (typeof progressData === 'string') {
 			// Si es una cadena, intentar parsearla como JSON
 			try {
 				progress = JSON.parse(progressData);
+				console.log(`Progress data parsed from string: status=${progress.status}, completed=${progress.completed}/${progress.total}`);
 			} catch (e) {
 				console.error("Error parsing progress data:", e);
 				return res.status(500).send({ 
@@ -832,12 +901,59 @@ export const getImportProgress = async (req, res) => {
 		} else {
 			// Si ya es un objeto, usarlo directamente
 			progress = progressData;
+			console.log(`Progress data is already an object: status=${progress.status}, completed=${progress.completed}/${progress.total}`);
+		}
+		
+		// Verificar si es una importación recién iniciada o una importación anterior completada
+		if (progress.status === 'completed') {
+			// Comprobar si la importación se completó hace menos de 5 segundos
+			const endTime = new Date(progress.endTime);
+			const now = new Date();
+			const timeDiff = (now - endTime) / 1000; // diferencia en segundos
+			
+			console.log(`Import completed at ${endTime.toISOString()}, current time: ${now.toISOString()}, diff: ${timeDiff} seconds`);
+			
+			// Si el frontend consulta el progreso inmediatamente después de iniciar una nueva importación,
+			// podría obtener los datos de una importación anterior completada
+			// En este caso, verificamos si la importación actual es realmente nueva
+			if (progress.completed === progress.total && progress.total > 0 && timeDiff > 5) {
+				// Esta es probablemente una importación anterior completada
+				console.log(`This appears to be a previously completed import (${timeDiff} seconds ago)`);
+				
+				// Verificar si hay una importación en curso
+				// Intentar actualizar Redis con un estado inicial para la nueva importación
+				await redis.set(redisKey, JSON.stringify({ 
+					importId: currentImportId,
+					completed: 0, 
+					total: progress.total, // Mantenemos el total anterior como referencia
+					status: 'starting',
+					year: progress.year,
+					company: progress.company,
+					branch: progress.branch,
+					startTime: new Date().toISOString()
+				}));
+				
+				// Actualizar el objeto progress para la respuesta
+				progress = {
+					importId: currentImportId,
+					completed: 0,
+					total: progress.total,
+					status: 'starting',
+					year: progress.year,
+					company: progress.company,
+					branch: progress.branch,
+					startTime: new Date().toISOString(),
+					progressPercentage: 0
+				};
+				
+				console.log(`Reset progress for new import: ${currentImportId}`);
+			}
 		}
 		
 		// Calcular el porcentaje de progreso
-		if (progress && progress.total > 0) {
+		if (progress && progress.total > 0 && !progress.progressPercentage) {
 			progress.progressPercentage = Math.round((progress.completed / progress.total) * 100);
-		} else if (progress) {
+		} else if (progress && !progress.progressPercentage) {
 			progress.progressPercentage = 0;
 		}
 		
@@ -846,6 +962,60 @@ export const getImportProgress = async (req, res) => {
 		console.error("Error getting import progress:", error);
 		return res.status(500).send({ 
 			message: "Error getting import progress", 
+			error: error.message 
+		});
+	}
+};
+
+/**
+ * Obtiene el historial de importaciones de un usuario
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @returns {Object} - Historial de importaciones
+ */
+export const getImportHistory = async (req, res) => {
+	try {
+		// Verificar que req.user existe
+		if (!req.user || !req.user._id) {
+			return res.status(401).send({ message: "Usuario no autenticado" });
+		}
+
+		const userId = req.user._id.toString();
+		const { year, limit = 10, page = 1 } = req.query;
+		
+		// Construir el filtro
+		const filter = { userId };
+		if (year) {
+			filter.year = parseInt(year);
+		}
+		
+		// Calcular el skip para la paginación
+		const skip = (parseInt(page) - 1) * parseInt(limit);
+		
+		// Obtener el historial de importaciones
+		const importHistory = await ImportHistory.find(filter)
+			.sort({ createdAt: -1 }) // Ordenar por fecha de creación descendente (más reciente primero)
+			.skip(skip)
+			.limit(parseInt(limit))
+			.populate('company', 'name')
+			.populate('branch', 'name');
+		
+		// Obtener el total de registros para la paginación
+		const total = await ImportHistory.countDocuments(filter);
+		
+		return res.status(200).send({
+			history: importHistory,
+			pagination: {
+				total,
+				page: parseInt(page),
+				limit: parseInt(limit),
+				pages: Math.ceil(total / parseInt(limit))
+			}
+		});
+	} catch (error) {
+		console.error("Error getting import history:", error);
+		return res.status(500).send({ 
+			message: "Error getting import history", 
 			error: error.message 
 		});
 	}

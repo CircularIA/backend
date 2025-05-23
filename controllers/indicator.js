@@ -756,6 +756,8 @@ const monthNumberToName = (monthNumber) => {
 	return monthNames[monthNumber];
 };
 
+export {getValue}
+
 //Routes
 
 export const getIndicators = async (req, res) => {

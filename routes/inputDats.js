@@ -4,10 +4,11 @@ const router = express.Router();
 import verifyToken from '../middlewares/verifyToken.js';
 import checkRole from '../middlewares/role-authorize.js';
 //Controllers
-import { getInputDats, getInputDatsByIndicator, registerInputDat, updateInputDat, updateInputDats, registerInputDatsMany, importInputDats, getImportProgress, checkExistingInputDats } from '../controllers/inputDat.js';
+import { getInputDats, getInputDatsByIndicator, registerInputDat, updateInputDat, updateInputDats, registerInputDatsMany, importInputDats, getImportProgress, getImportHistory, checkExistingInputDats } from '../controllers/inputDat.js';
 
 // Rutas específicas primero
 router.get('/import/progress', verifyToken, getImportProgress);
+router.get('/import/history', verifyToken, getImportHistory);
 router.get('/byIndicator/:branch/:indicator/:year?/:month?/:day?', verifyToken, getInputDatsByIndicator);
 
 //Post Routes

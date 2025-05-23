@@ -3,6 +3,7 @@ import Branch from "../models/Branch.js";
 import ListInputDat from "../models/ListInputDat.js";
 import Indicator from "../models/Indicator.js";
 import mongoose from "mongoose";
+import InputDat from "../models/InputDat.js";
 
 export const getListInputDats = async (req, res) => {
 	try {
@@ -100,3 +101,99 @@ export const getListInputDatsByIndicator = async (req, res) => {
 		res.status(400).json({ message: error.message });
 	}
 }
+
+export const getEcoequivalences = async (req, res) => {
+	try {
+		const { subcategory, year, branch } = req.query;
+		
+		if (!branch) {
+			return res.status(400).json({ message: "Branch is required" });
+		}
+
+		// Año actual por defecto si no se proporciona
+		const targetYear = year ? parseInt(year) : new Date().getFullYear();
+		const startDate = new Date(targetYear, 0, 1); // 1 de enero del año
+		const endDate = new Date(targetYear, 11, 31, 23, 59, 59, 999); // 31 de diciembre del año
+		
+		// Filtro para ListInputDat
+		const filter = {};
+		if (subcategory) {
+			filter.subcategory = subcategory;
+		} else {
+			filter.subcategory = 'Salida y valorización de Residuos, Productos y subproductos';
+		}
+		
+		// Obtener todos los listInputDats que coincidan con el filtro
+		const listInputDats = await ListInputDat.find(filter);
+		
+		if (!listInputDats.length) {
+			return res.status(200).json({ 
+				message: "No se encontraron indicadores para la subcategoría especificada",
+				data: []
+			});
+		}
+		
+		// Obtener los IDs de los listInputDats
+		const listInputDatIds = listInputDats.map(item => item._id);
+		
+		// Buscar todos los InputDat relacionados con estos listInputDats en el período de tiempo especificado
+		const inputDats = await InputDat.find({
+			listInputDat: { $in: listInputDatIds },
+			branch: branch,
+			date: { $gte: startDate, $lte: endDate }
+		});
+		
+		// Calcular la suma de valores para cada listInputDat
+		const sumByListInputDat = {};
+		inputDats.forEach(inputDat => {
+			const listInputDatId = inputDat.listInputDat.toString();
+			if (!sumByListInputDat[listInputDatId]) {
+				sumByListInputDat[listInputDatId] = 0;
+			}
+			sumByListInputDat[listInputDatId] += inputDat.value;
+		});
+		
+		// Calcular las ecoequivalencias totales
+		const totalEcoequivalences = {
+			co2: 0,
+			agua: 0,
+			arboles: 0,
+			energia: 0
+		};
+		
+		// Para cada listInputDat, multiplicar su suma por sus ecoequivalencias
+		for (const listInputDat of listInputDats) {
+			const listInputDatId = listInputDat._id.toString();
+			const sum = sumByListInputDat[listInputDatId] || 0;
+			
+			// Multiplicar la suma por cada ecoequivalencia
+			totalEcoequivalences.co2 += sum * (listInputDat.ecoequivalence.co2 || 0);
+			totalEcoequivalences.agua += sum * (listInputDat.ecoequivalence.agua || 0);
+			totalEcoequivalences.arboles += sum * (listInputDat.ecoequivalence.arboles || 0);
+			totalEcoequivalences.energia += sum * (listInputDat.ecoequivalence.energia || 0);
+		}
+		
+		// Preparar la respuesta con detalles de los indicadores y sus valores
+		const detailedResponse = {
+			year: targetYear,
+			subcategory: filter.subcategory,
+			indicators: listInputDats.map(item => ({
+				name: item.name,
+				ecoequivalence: item.ecoequivalence,
+				totalValue: sumByListInputDat[item._id.toString()] || 0,
+				calculatedEcoequivalences: {
+					co2: (sumByListInputDat[item._id.toString()] || 0) * (item.ecoequivalence.co2 || 0),
+					agua: (sumByListInputDat[item._id.toString()] || 0) * (item.ecoequivalence.agua || 0),
+					arboles: (sumByListInputDat[item._id.toString()] || 0) * (item.ecoequivalence.arboles || 0),
+					energia: (sumByListInputDat[item._id.toString()] || 0) * (item.ecoequivalence.energia || 0)
+				}
+			})),
+			ecoequivalences: totalEcoequivalences
+		};
+		
+		res.status(200).json(detailedResponse);
+	} catch (error) {
+		console.error("Error al calcular ecoequivalencias:", error);
+		res.status(500).json({ message: "Error interno del servidor", error: error.message });
+	}
+};
